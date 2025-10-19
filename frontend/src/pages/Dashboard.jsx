@@ -247,7 +247,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <h1 className="text-xl font-semibold">
-            {activeTab === 'chat' ? 'Vasool AI Assistant' : 'Dashboard Overview'}
+            {activeTab === 'chat' ? 'Vasool AI Assistant' : 'Financial Dashboard'}
           </h1>
           <div className="flex items-center space-x-3">
             <Button
@@ -338,49 +338,47 @@ const Dashboard = () => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 p-6 overflow-y-auto">
-            <div className="max-w-6xl mx-auto">
-              {analytics ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card className="p-6">
-                      <h3 className="text-sm font-medium text-gray-600 mb-2">Total Outstanding</h3>
-                      <p className="text-3xl font-bold text-gray-900">₹{(analytics.total_outstanding / 100000).toFixed(1)}L</p>
-                      <p className="text-sm text-green-600 mt-1">↓ 12% from last month</p>
-                    </Card>
-                    <Card className="p-6">
-                      <h3 className="text-sm font-medium text-gray-600 mb-2">Recovery Rate</h3>
-                      <p className="text-3xl font-bold text-gray-900">{analytics.recovery_rate}%</p>
-                      <p className="text-sm text-green-600 mt-1">↑ 8% from last month</p>
-                    </Card>
-                    <Card className="p-6">
-                      <h3 className="text-sm font-medium text-gray-600 mb-2">Active Accounts</h3>
-                      <p className="text-3xl font-bold text-gray-900">{analytics.active_accounts}</p>
-                      <p className="text-sm text-gray-500 mt-1">Across all agents</p>
-                    </Card>
-                  </div>
-                  <Card className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                    <div className="space-y-3">
-                      {analytics.recent_activity.map((activity) => (
-                        <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium">{activity.title}</p>
-                            <p className="text-sm text-gray-500">{activity.description}</p>
-                          </div>
-                          {activity.amount && (
-                            <span className="text-green-600 font-semibold">₹{activity.amount.toLocaleString()}</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-64">
-                  <p className="text-gray-500">Loading analytics...</p>
-                </div>
-              )}
+          <div className="flex-1 overflow-y-auto bg-gray-50">
+            {/* Sample Data Banner */}
+            <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-blue-600 mr-2" />
+                <p className="text-sm text-blue-800">
+                  <strong>Sample Data:</strong> Showing dummy data for demonstration. Connect your accounting software and banking applications to see real data.
+                </p>
+              </div>
+            </div>
+
+            {/* Dashboard Tabs */}
+            <div className="bg-white border-b border-gray-200 px-6">
+              <div className="flex space-x-1">
+                {dashboardTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveDashboardTab(tab.id)}
+                      className={`flex items-center space-x-2 px-4 py-3 border-b-2 transition-colors ${
+                        activeDashboardTab === tab.id
+                          ? 'border-green-600 text-green-600 font-medium'
+                          : 'border-transparent text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dashboard Content */}
+            <div className="p-6">
+              {activeDashboardTab === 'overview' && <OverviewTab />}
+              {activeDashboardTab === 'collections' && <CollectionsTab />}
+              {activeDashboardTab === 'reconciliation' && <ReconciliationTab />}
+              {activeDashboardTab === 'analytics' && <AnalyticsTab />}
+              {activeDashboardTab === 'communication' && <CommunicationTab />}
             </div>
           </div>
         )}
