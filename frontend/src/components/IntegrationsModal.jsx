@@ -102,42 +102,56 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
             
             <Card>
               <CardContent className="pt-6">
-                <form onSubmit={handleZohoConnect} className="space-y-4">
-                  <div>
-                    <Label htmlFor="zoho-email">Zoho Email</Label>
-                    <Input
-                      id="zoho-email"
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={zohoCredentials.email}
-                      onChange={(e) => setZohoCredentials({ ...zohoCredentials, email: e.target.value })}
-                      required
-                    />
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">Secure OAuth 2.0 Connection</h4>
+                      <p className="text-sm text-gray-600">
+                        You'll be redirected to Zoho Books to securely authorize access to your accounting data.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="zoho-password">Zoho Password</Label>
-                    <Input
-                      id="zoho-password"
-                      type="password"
-                      placeholder="Enter your Zoho password"
-                      value={zohoCredentials.password}
-                      onChange={(e) => setZohoCredentials({ ...zohoCredentials, password: e.target.value })}
-                      required
-                    />
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 className="font-medium text-gray-900 mb-3">What we'll access:</h5>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-start">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>Read your invoices and outstanding payments</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>Access customer payment history</span>
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>View financial reports for collections analysis</span>
+                      </li>
+                    </ul>
                   </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> Your credentials are securely encrypted and used only to establish OAuth 2.0 connection with Zoho Books.
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-sm text-green-800">
+                      <strong className="flex items-center mb-1">
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Secure & Safe
+                      </strong>
+                      We use OAuth 2.0 industry standard. Your Zoho credentials are never shared with us. 
+                      You can revoke access anytime from your Zoho account settings.
                     </p>
                   </div>
+
                   <Button
-                    type="submit"
+                    onClick={handleZohoConnect}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     disabled={loading}
                   >
-                    {loading ? 'Connecting...' : 'Connect to Zoho Books'}
+                    {loading ? 'Redirecting to Zoho...' : 'Connect with Zoho Books'}
                   </Button>
-                </form>
+                </div>
               </CardContent>
             </Card>
           </div>
