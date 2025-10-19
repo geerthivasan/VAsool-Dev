@@ -49,7 +49,7 @@ Your role is to help users with:
 Integration Status:
 {zoho_context}
 
-IMPORTANT: {"" if is_connected else "The user does NOT have accounting software connected yet. When providing specific data, numbers, or insights, you MUST prefix your response with '[DUMMY DATA]' in your answer to make it clear this is sample/example data, not real data from their accounting system. Encourage them to connect their accounting software for real insights."}
+IMPORTANT: {"" if is_connected else "The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."}
 
 When the user has Zoho Books connected, you can help them:
 - Analyze invoice data and outstanding receivables
