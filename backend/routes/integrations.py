@@ -32,6 +32,44 @@ class IntegrationStatus(BaseModel):
     zohobooks_email: str = None
     last_sync: str = None
 
+@router.post("/zoho/demo-connect", response_model=IntegrationResponse)
+async def demo_connect_zoho(current_user: dict = Depends(get_current_user)):
+    """Demo mode connection for testing without real OAuth credentials"""
+    db = init_db()
+    user_id = current_user["user_id"]
+    
+    integration_data = {
+        "user_id": user_id,
+        "type": "zohobooks",
+        "email": "demo@zohobooks.com",
+        "connected_at": datetime.utcnow(),
+        "status": "active",
+        "last_sync": datetime.utcnow(),
+        "mode": "demo"
+    }
+    
+    # Check if integration exists
+    existing = await db.integrations.find_one({
+        "user_id": user_id,
+        "type": "zohobooks"
+    })
+    
+    if existing:
+        await db.integrations.update_one(
+            {"user_id": user_id, "type": "zohobooks"},
+            {"$set": integration_data}
+        )
+        integration_id = str(existing["_id"])
+    else:
+        result = await db.integrations.insert_one(integration_data)
+        integration_id = str(result.inserted_id)
+    
+    return IntegrationResponse(
+        success=True,
+        message="Zoho Books connected in demo mode",
+        integration_id=integration_id
+    )
+
 @router.get("/zoho/auth-url", response_model=ZohoAuthUrlResponse)
 async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
     """Generate Zoho OAuth 2.0 authorization URL"""
