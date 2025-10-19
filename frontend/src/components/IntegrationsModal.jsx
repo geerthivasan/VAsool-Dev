@@ -180,11 +180,15 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
-                      <strong>🔧 Setup Options:</strong>
+                      <strong>🔧 Connection Options:</strong>
                       <br />
-                      <strong>Demo Mode:</strong> Test the integration with simulated data (no real Zoho account needed)
+                      <strong>Demo Mode:</strong> Test integration with simulated data (no Zoho account needed)
                       <br />
-                      <strong>Production Mode:</strong> Requires Zoho OAuth App setup with client ID and secret
+                      <strong>Production Mode:</strong> Connect your real Zoho Books account (requires OAuth setup)
+                      <br />
+                      <span className="text-xs mt-2 block italic">
+                        Note: Production OAuth will redirect you to Zoho's login page in a new window
+                      </span>
                     </p>
                   </div>
 
@@ -195,6 +199,10 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
                   >
                     {loading ? 'Connecting...' : 'Connect with Zoho Books'}
                   </Button>
+                  
+                  <p className="text-xs text-center text-gray-500 mt-2">
+                    By connecting, you agree to Zoho's data access permissions
+                  </p>
                 </div>
               </CardContent>
             </Card>
