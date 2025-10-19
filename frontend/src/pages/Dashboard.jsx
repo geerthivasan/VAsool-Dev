@@ -4,32 +4,61 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { MessageSquare, BarChart3, Plus, AlertCircle, Send, Leaf, Link as LinkIcon, ChevronLeft } from 'lucide-react';
-import { mockChatMessages } from '../mockData';
+import { chatAPI, dashboardAPI } from '../api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('chat');
-  const [messages, setMessages] = useState(mockChatMessages);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
   const messagesEndRef = useRef(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/login');
+      return;
     }
-  }, [navigate]);
+    
+    // Load chat history
+    loadChatHistory();
+    
+    // Load dashboard analytics
+    if (activeTab === 'dashboard') {
+      loadAnalytics();
+    }
+  }, [navigate, activeTab]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  const loadChatHistory = async () => {
+    try {
+      const response = await chatAPI.getHistory(sessionId);
+      setMessages(response.messages);
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const data = await dashboardAPI.getAnalytics();
+      setAnalytics(data);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
@@ -44,34 +73,43 @@ const Dashboard = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Mock AI response
-    setTimeout(() => {
-      const aiResponse = {
+    try {
+      const response = await chatAPI.sendMessage(inputMessage, sessionId);
+      
+      if (!sessionId) {
+        setSessionId(response.session_id);
+      }
+
+      const aiMessage = {
         id: messages.length + 2,
         sender: 'assistant',
-        message: getAIResponse(inputMessage),
+        message: response.response,
+        timestamp: response.timestamp
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorMessage = {
+        id: messages.length + 2,
+        sender: 'assistant',
+        message: 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date().toISOString()
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
-  };
-
-  const getAIResponse = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase();
-    if (lowerMessage.includes('portfolio') || lowerMessage.includes('collection')) {
-      return "I can help you analyze your collections portfolio. Based on current data, you have several accounts requiring attention. Would you like me to prioritize them by recovery probability or outstanding amount?";
-    } else if (lowerMessage.includes('payment') || lowerMessage.includes('track')) {
-      return "I'm tracking all payment activities in real-time. Let me pull up the latest payment reconciliation report for you. Any specific time period you'd like to review?";
-    } else if (lowerMessage.includes('strategy') || lowerMessage.includes('optimize')) {
-      return "I can help optimize your collection strategies. Our AI agents have identified several accounts that would benefit from personalized outreach. Shall I draft some communication templates?";
-    } else {
-      return "I understand you're asking about collections management. I can help with portfolio analysis, payment tracking, strategy optimization, and compliance monitoring. What specific area would you like to explore?";
     }
   };
 
   const handleNewChat = () => {
-    setMessages([mockChatMessages[0]]);
+    setMessages([{
+      id: 1,
+      sender: 'assistant',
+      message: "Hello! I'm your AI Collections Assistant. I can help you analyze your portfolio, track payments, and optimize your collection strategies. What would you like to know?",
+      timestamp: new Date().toISOString()
+    }]);
+    setSessionId(null);
   };
 
   return (
