@@ -13,7 +13,6 @@ const API = `${BACKEND_URL}/api`;
 
 const IntegrationsModal = ({ open, onOpenChange }) => {
   const [activeIntegration, setActiveIntegration] = useState(null);
-  const [zohoCredentials, setZohoCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [connectedIntegrations, setConnectedIntegrations] = useState([]);
 
@@ -52,37 +51,28 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
     }
   ];
 
-  const handleZohoConnect = async (e) => {
-    e.preventDefault();
+  const handleZohoConnect = async () => {
     setLoading(true);
     
     try {
       const token = localStorage.getItem('authToken');
-      const response = await axios.post(
-        `${API}/integrations/zoho/connect`,
-        zohoCredentials,
+      
+      // Get OAuth URL from backend
+      const response = await axios.get(
+        `${API}/integrations/zoho/auth-url`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.success) {
-        toast({
-          title: "Connected!",
-          description: "Zoho Books has been connected successfully.",
-        });
-        setConnectedIntegrations([...connectedIntegrations, 'zohobooks']);
-        setActiveIntegration(null);
-        setZohoCredentials({ email: '', password: '' });
-        
-        // Refresh page to update integration status
-        window.location.reload();
+      if (response.data.auth_url) {
+        // Redirect to Zoho's OAuth page
+        window.location.href = response.data.auth_url;
       }
     } catch (error) {
       toast({
         title: "Connection Failed",
-        description: error.response?.data?.detail || "Failed to connect to Zoho Books",
+        description: error.response?.data?.detail || "Failed to initiate Zoho Books connection",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
