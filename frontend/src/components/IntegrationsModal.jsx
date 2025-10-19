@@ -172,12 +172,22 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
                     </p>
                   </div>
 
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>🔧 Setup Options:</strong>
+                      <br />
+                      <strong>Demo Mode:</strong> Test the integration with simulated data (no real Zoho account needed)
+                      <br />
+                      <strong>Production Mode:</strong> Requires Zoho OAuth App setup with client ID and secret
+                    </p>
+                  </div>
+
                   <Button
                     onClick={handleZohoConnect}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                     disabled={loading}
                   >
-                    {loading ? 'Redirecting to Zoho...' : 'Connect with Zoho Books'}
+                    {loading ? 'Connecting...' : 'Connect with Zoho Books'}
                   </Button>
                 </div>
               </CardContent>
