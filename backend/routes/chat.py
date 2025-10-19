@@ -33,6 +33,7 @@ async def generate_ai_response(user_message: str, user_id: str, chat_history: li
     
     # Get integration context
     zoho_context = await get_zoho_context(user_id)
+    is_connected = "has Zoho Books connected" in zoho_context
     
     # Build system prompt with context
     system_prompt = f"""You are an AI Collections Assistant for Vasool, a credit collections management platform. 
@@ -47,6 +48,8 @@ Your role is to help users with:
 
 Integration Status:
 {zoho_context}
+
+IMPORTANT: {"" if is_connected else "The user does NOT have accounting software connected yet. When providing specific data, numbers, or insights, you MUST prefix your response with '[DUMMY DATA]' in your answer to make it clear this is sample/example data, not real data from their accounting system. Encourage them to connect their accounting software for real insights."}
 
 When the user has Zoho Books connected, you can help them:
 - Analyze invoice data and outstanding receivables
