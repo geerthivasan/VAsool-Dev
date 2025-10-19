@@ -57,15 +57,43 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
     try {
       const token = localStorage.getItem('authToken');
       
-      // Get OAuth URL from backend
-      const response = await axios.get(
-        `${API}/integrations/zoho/auth-url`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      // Check if we should use demo mode (when real OAuth credentials aren't configured)
+      const useDemoMode = window.confirm(
+        "Demo Mode Available\n\n" +
+        "Since Zoho OAuth credentials aren't configured yet, would you like to use DEMO MODE?\n\n" +
+        "✅ Click OK for Demo Mode (simulates connection)\n" +
+        "❌ Click Cancel to try real OAuth (requires Zoho app setup)"
       );
+      
+      if (useDemoMode) {
+        // Use demo mode - simulate successful connection
+        const response = await axios.post(
+          `${API}/integrations/zoho/demo-connect`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (response.data.success) {
+          toast({
+            title: "Demo Connection Successful!",
+            description: "Zoho Books connected in demo mode. Real OAuth setup required for production.",
+          });
+          setActiveIntegration(null);
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      } else {
+        // Try real OAuth flow
+        const response = await axios.get(
+          `${API}/integrations/zoho/auth-url`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      if (response.data.auth_url) {
-        // Redirect to Zoho's OAuth page
-        window.location.href = response.data.auth_url;
+        if (response.data.auth_url) {
+          // Redirect to Zoho's OAuth page
+          window.location.href = response.data.auth_url;
+        }
       }
     } catch (error) {
       toast({
