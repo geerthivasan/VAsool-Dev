@@ -194,13 +194,36 @@ const Dashboard = () => {
         {/* Integrations */}
         {!sidebarCollapsed && (
           <div className="mt-auto p-4 border-t border-gray-200">
-            <div className="text-center">
-              <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 mb-3">No integrations connected</p>
-              <Button variant="outline" size="sm" className="w-full">
-                Connect Now
-              </Button>
-            </div>
+            {integrationStatus.zohobooks_connected ? (
+              <div className="text-center">
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-2">
+                  <AlertCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <p className="text-sm font-medium text-green-700 mb-1">Zoho Books Connected</p>
+                <p className="text-xs text-gray-500 mb-3">{integrationStatus.zohobooks_email}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setIntegrationsModalOpen(true)}
+                >
+                  Manage
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500 mb-3">No integrations connected</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setIntegrationsModalOpen(true)}
+                >
+                  Connect Now
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
