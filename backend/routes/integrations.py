@@ -5,18 +5,21 @@ from database import init_db
 from datetime import datetime
 import os
 import secrets
+import httpx
 
 router = APIRouter(prefix="/api/integrations", tags=["Integrations"])
 
 # Zoho OAuth Configuration
-ZOHO_CLIENT_ID = os.environ.get('ZOHO_CLIENT_ID', 'demo_client_id')
-ZOHO_CLIENT_SECRET = os.environ.get('ZOHO_CLIENT_SECRET', 'demo_client_secret')
-ZOHO_REDIRECT_URI = os.environ.get('ZOHO_REDIRECT_URI', 'http://localhost:3000/zoho/callback')
+ZOHO_CLIENT_ID = os.environ.get('ZOHO_CLIENT_ID', '1000.YOUR_CLIENT_ID')
+ZOHO_CLIENT_SECRET = os.environ.get('ZOHO_CLIENT_SECRET', 'your_client_secret')
+ZOHO_REDIRECT_URI = os.environ.get('ZOHO_REDIRECT_URI', f'{os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:3000")}/zoho/callback')
 ZOHO_AUTH_URL = "https://accounts.zoho.com/oauth/v2/auth"
 ZOHO_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
+ZOHO_SCOPE = "ZohoBooks.fullaccess.all"
 
 class ZohoAuthUrlResponse(BaseModel):
     auth_url: str
+    state: str
 
 class ZohoCallbackRequest(BaseModel):
     code: str
@@ -72,12 +75,12 @@ async def demo_connect_zoho(current_user: dict = Depends(get_current_user)):
 
 @router.get("/zoho/auth-url", response_model=ZohoAuthUrlResponse)
 async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
-    """Generate Zoho OAuth 2.0 authorization URL"""
+    """Generate Zoho OAuth 2.0 authorization URL following official Zoho Books API documentation"""
     
     # Generate state token for CSRF protection
     state = secrets.token_urlsafe(32)
     
-    # Store state in session/db for verification (in production)
+    # Store state in session/db for verification
     db = init_db()
     await db.oauth_states.insert_one({
         "user_id": current_user["user_id"],
@@ -85,18 +88,19 @@ async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
         "created_at": datetime.utcnow()
     })
     
-    # Build OAuth URL
+    # Build OAuth URL exactly as per Zoho Books API documentation
     auth_url = (
         f"{ZOHO_AUTH_URL}"
-        f"?client_id={ZOHO_CLIENT_ID}"
+        f"?scope={ZOHO_SCOPE}"
+        f"&client_id={ZOHO_CLIENT_ID}"
         f"&response_type=code"
-        f"&scope=ZohoBooks.fullaccess.all"
         f"&redirect_uri={ZOHO_REDIRECT_URI}"
         f"&state={state}"
         f"&access_type=offline"
+        f"&prompt=consent"
     )
     
-    return ZohoAuthUrlResponse(auth_url=auth_url)
+    return ZohoAuthUrlResponse(auth_url=auth_url, state=state)
 
 @router.post("/zoho/callback", response_model=IntegrationResponse)
 async def zoho_oauth_callback(
