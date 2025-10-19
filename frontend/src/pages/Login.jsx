@@ -6,33 +6,43 @@ import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft, Leaf, Mail, Lock } from 'lucide-react';
-import { mockUser } from '../mockData';
 import { toast } from '../hooks/use-toast';
+import { authAPI } from '../api';
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    // Mock authentication - will be replaced with backend
-    if (email === mockUser.email && password === mockUser.password) {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', email);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to Vasool!",
-      });
-      navigate('/dashboard');
-    } else {
+    try {
+      const response = await authAPI.login({ email, password });
+      
+      if (response.success) {
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userEmail', response.user.email);
+        localStorage.setItem('userName', response.user.name);
+        
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${response.user.name}!`,
+        });
+        navigate('/dashboard');
+      }
+    } catch (error) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Try abc@test.com / test",
+        description: error.response?.data?.detail || "Invalid email or password",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,8 +117,12 @@ const Login = () => {
                   Forgot password?
                 </Link>
               </div>
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                Sign In
+              <Button 
+                type="submit" 
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
             <div className="mt-6 text-center text-sm text-gray-600">
