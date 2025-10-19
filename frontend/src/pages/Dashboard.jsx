@@ -33,11 +33,26 @@ const Dashboard = () => {
     // Load chat history
     loadChatHistory();
     
+    // Load integration status
+    loadIntegrationStatus();
+    
     // Load dashboard analytics
     if (activeTab === 'dashboard') {
       loadAnalytics();
     }
   }, [navigate, activeTab]);
+
+  const loadIntegrationStatus = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get(`${API}/integrations/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setIntegrationStatus(response.data);
+    } catch (error) {
+      console.error('Failed to load integration status:', error);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
