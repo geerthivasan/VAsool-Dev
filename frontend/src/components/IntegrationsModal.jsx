@@ -57,48 +57,65 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
     try {
       const token = localStorage.getItem('authToken');
       
-      // Check if we should use demo mode (when real OAuth credentials aren't configured)
-      const useDemoMode = window.confirm(
-        "Demo Mode Available\n\n" +
-        "Since Zoho OAuth credentials aren't configured yet, would you like to use DEMO MODE?\n\n" +
-        "✅ Click OK for Demo Mode (simulates connection)\n" +
-        "❌ Click Cancel to try real OAuth (requires Zoho app setup)"
-      );
-      
-      if (useDemoMode) {
-        // Use demo mode - simulate successful connection
-        const response = await axios.post(
-          `${API}/integrations/zoho/demo-connect`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        if (response.data.success) {
-          toast({
-            title: "Demo Connection Successful!",
-            description: "Zoho Books connected in demo mode. Real OAuth setup required for production.",
-          });
-          setActiveIntegration(null);
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        }
-      } else {
-        // Close modal before redirect to avoid iframe issues
-        onOpenChange(false);
-        
-        // Get OAuth URL from backend
-        const response = await axios.get(
+      // First, try to get OAuth URL to check if credentials are configured
+      try {
+        const testResponse = await axios.get(
           `${API}/integrations/zoho/auth-url`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        if (response.data.auth_url) {
-          // Small delay to ensure modal closes, then redirect at top level
-          setTimeout(() => {
-            // Force top-level redirect (not in iframe/modal)
-            window.top.location.href = response.data.auth_url;
-          }, 100);
+        
+        // If we get here, credentials are configured
+        // Close modal and redirect to Zoho
+        onOpenChange(false);
+        toast({
+          title: "Redirecting to Zoho...",
+          description: "You'll be redirected to Zoho Books login page",
+        });
+        
+        setTimeout(() => {
+          window.location.href = testResponse.data.auth_url;
+        }, 500);
+        
+      } catch (error) {
+        // OAuth credentials not configured, offer demo mode
+        if (error.response?.status === 400) {
+          const useDemoMode = window.confirm(
+            "OAuth Credentials Not Configured\n\n" +
+            "Zoho OAuth credentials (Client ID & Secret) are not set up yet.\n\n" +
+            "Would you like to use DEMO MODE instead?\n\n" +
+            "✅ Click OK for Demo Mode (works immediately)\n" +
+            "❌ Click Cancel to set up OAuth credentials first\n\n" +
+            "See /app/ZOHO_OAUTH_SETUP.md for setup instructions"
+          );
+          
+          if (useDemoMode) {
+            // Use demo mode
+            const response = await axios.post(
+              `${API}/integrations/zoho/demo-connect`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (response.data.success) {
+              toast({
+                title: "Demo Connection Successful!",
+                description: "Zoho Books connected in demo mode.",
+              });
+              setActiveIntegration(null);
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            }
+          } else {
+            toast({
+              title: "Setup Required",
+              description: "Please configure Zoho OAuth credentials. See ZOHO_OAUTH_SETUP.md",
+              variant: "destructive",
+            });
+            setLoading(false);
+          }
+        } else {
+          throw error;
         }
       }
     } catch (error) {
