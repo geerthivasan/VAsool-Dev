@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft, Leaf, Mail, Lock, User } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
+import { authAPI } from '../api';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -15,8 +16,9 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -28,12 +30,31 @@ const Signup = () => {
       return;
     }
 
-    // Mock signup - will be replaced with backend
-    toast({
-      title: "Account Created!",
-      description: "Your account has been created successfully. Please login.",
-    });
-    navigate('/login');
+    setLoading(true);
+    
+    try {
+      const response = await authAPI.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.success) {
+        toast({
+          title: "Account Created!",
+          description: "Your account has been created successfully. Please login.",
+        });
+        navigate('/login');
+      }
+    } catch (error) {
+      toast({
+        title: "Signup Failed",
+        description: error.response?.data?.detail || "Failed to create account",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -126,8 +147,12 @@ const Signup = () => {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                Create Account
+              <Button 
+                type="submit" 
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
             <div className="mt-6 text-center text-sm text-gray-600">
