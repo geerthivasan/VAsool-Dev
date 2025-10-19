@@ -95,6 +95,16 @@ async def send_message(
     session_id = chat_msg.session_id if chat_msg.session_id else str(uuid.uuid4())
     user_id = current_user["user_id"]
     
+    # Get existing chat history for context
+    chat_history = []
+    if session_id:
+        existing_session = await db.chat_sessions.find_one({
+            "user_id": user_id,
+            "session_id": session_id
+        })
+        if existing_session and "messages" in existing_session:
+            chat_history = existing_session["messages"]
+    
     # Create user message
     user_msg = {
         "sender": "user",
@@ -102,8 +112,8 @@ async def send_message(
         "timestamp": datetime.utcnow()
     }
     
-    # Generate AI response
-    ai_response_text = generate_ai_response(chat_msg.message)
+    # Generate AI response using OpenAI
+    ai_response_text = await generate_ai_response(chat_msg.message, user_id, chat_history)
     ai_msg = {
         "sender": "assistant",
         "message": ai_response_text,
