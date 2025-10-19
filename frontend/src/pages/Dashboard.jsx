@@ -294,9 +294,33 @@ const Dashboard = () => {
                           <span className="text-sm font-medium text-gray-700">AI Assistant</span>
                         </div>
                       )}
-                      <p className={msg.sender === 'user' ? 'text-white' : 'text-gray-800'}>
-                        {msg.message}
-                      </p>
+                      {msg.sender === 'assistant' && msg.message.includes('[DUMMY DATA]') ? (
+                        <div>
+                          <div className="mb-2 inline-block">
+                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold border border-red-300">
+                              ⚠️ DUMMY DATA
+                            </span>
+                          </div>
+                          <p className="text-gray-800">
+                            {msg.message.replace('[DUMMY DATA]', '').trim()}
+                          </p>
+                          {!integrationStatus.zohobooks_connected && (
+                            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                              💡 <strong>Tip:</strong> Connect your accounting software to get real data and insights.{' '}
+                              <button 
+                                onClick={() => setIntegrationsModalOpen(true)}
+                                className="underline font-semibold hover:text-blue-900"
+                              >
+                                Connect Now
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className={msg.sender === 'user' ? 'text-white' : 'text-gray-800'}>
+                          {msg.message}
+                        </p>
+                      )}
                       <span className={`text-xs mt-2 block ${
                         msg.sender === 'user' ? 'text-green-100' : 'text-gray-400'
                       }`}>
