@@ -371,6 +371,12 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Integrations Modal */}
+      <IntegrationsModal
+        open={integrationsModalOpen}
+        onOpenChange={setIntegrationsModalOpen}
+      />
     </div>
   );
 };
