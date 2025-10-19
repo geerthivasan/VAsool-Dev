@@ -107,7 +107,7 @@ async def zoho_oauth_callback(
     callback_data: ZohoCallbackRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Handle OAuth callback from Zoho"""
+    """Handle OAuth callback from Zoho and exchange code for access token"""
     db = init_db()
     user_id = current_user["user_id"]
     
@@ -120,42 +120,69 @@ async def zoho_oauth_callback(
     if not state_record:
         raise HTTPException(status_code=400, detail="Invalid state token")
     
-    # In production, exchange code for access token here
-    # For MVP, we'll mark integration as connected
-    
-    integration_data = {
-        "user_id": user_id,
-        "type": "zohobooks",
-        "connected_at": datetime.utcnow(),
-        "status": "active",
-        "last_sync": datetime.utcnow(),
-        "auth_code": callback_data.code  # In production, store encrypted access_token
-    }
-    
-    # Check if integration exists
-    existing = await db.integrations.find_one({
-        "user_id": user_id,
-        "type": "zohobooks"
-    })
-    
-    if existing:
-        await db.integrations.update_one(
-            {"user_id": user_id, "type": "zohobooks"},
-            {"$set": integration_data}
-        )
-        integration_id = str(existing["_id"])
-    else:
-        result = await db.integrations.insert_one(integration_data)
-        integration_id = str(result.inserted_id)
-    
-    # Clean up state token
-    await db.oauth_states.delete_one({"_id": state_record["_id"]})
-    
-    return IntegrationResponse(
-        success=True,
-        message="Zoho Books connected successfully",
-        integration_id=integration_id
-    )
+    # Exchange authorization code for access token
+    try:
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                ZOHO_TOKEN_URL,
+                data={
+                    "code": callback_data.code,
+                    "client_id": ZOHO_CLIENT_ID,
+                    "client_secret": ZOHO_CLIENT_SECRET,
+                    "redirect_uri": ZOHO_REDIRECT_URI,
+                    "grant_type": "authorization_code"
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if token_response.status_code != 200:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Failed to exchange code for token: {token_response.text}"
+                )
+            
+            token_data = token_response.json()
+            
+            # Store access token and refresh token securely
+            integration_data = {
+                "user_id": user_id,
+                "type": "zohobooks",
+                "connected_at": datetime.utcnow(),
+                "status": "active",
+                "last_sync": datetime.utcnow(),
+                "access_token": token_data.get("access_token"),  # Should be encrypted in production
+                "refresh_token": token_data.get("refresh_token"),  # Should be encrypted in production
+                "token_expires_in": token_data.get("expires_in"),
+                "mode": "production"
+            }
+            
+            # Check if integration exists
+            existing = await db.integrations.find_one({
+                "user_id": user_id,
+                "type": "zohobooks"
+            })
+            
+            if existing:
+                await db.integrations.update_one(
+                    {"user_id": user_id, "type": "zohobooks"},
+                    {"$set": integration_data}
+                )
+                integration_id = str(existing["_id"])
+            else:
+                result = await db.integrations.insert_one(integration_data)
+                integration_id = str(result.inserted_id)
+            
+            # Clean up state token
+            await db.oauth_states.delete_one({"_id": state_record["_id"]})
+            
+            return IntegrationResponse(
+                success=True,
+                message="Zoho Books connected successfully",
+                integration_id=integration_id
+            )
+            
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"Network error: {str(e)}")
 
 @router.get("/status", response_model=IntegrationStatus)
 async def get_integration_status(
