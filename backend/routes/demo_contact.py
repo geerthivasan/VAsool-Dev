@@ -1,18 +1,14 @@
 from fastapi import APIRouter
-from motor.motor_asyncio import AsyncIOMotorClient
 from models import DemoRequest, ContactRequest, StandardResponse
-import os
+from database import init_db
 from datetime import datetime
 
 router = APIRouter(prefix="/api", tags=["Demo & Contact"])
 
-# Get database
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
 @router.post("/demo/schedule", response_model=StandardResponse)
 async def schedule_demo(demo_req: DemoRequest):
+    db = init_db()
+    
     # Save demo request
     demo_dict = {
         "name": demo_req.name,
@@ -32,6 +28,8 @@ async def schedule_demo(demo_req: DemoRequest):
 
 @router.post("/contact/sales", response_model=StandardResponse)
 async def contact_sales(contact_req: ContactRequest):
+    db = init_db()
+    
     # Save contact message
     contact_dict = {
         "name": contact_req.name,
