@@ -77,6 +77,13 @@ async def demo_connect_zoho(current_user: dict = Depends(get_current_user)):
 async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
     """Generate Zoho OAuth 2.0 authorization URL following official Zoho Books API documentation"""
     
+    # Check if real OAuth credentials are configured
+    if ZOHO_CLIENT_ID.startswith('1000.YOUR') or ZOHO_CLIENT_SECRET == 'your_client_secret':
+        raise HTTPException(
+            status_code=400, 
+            detail="Zoho OAuth credentials not configured. Please set ZOHO_CLIENT_ID and ZOHO_CLIENT_SECRET in environment variables, or use Demo Mode."
+        )
+    
     # Generate state token for CSRF protection
     state = secrets.token_urlsafe(32)
     
