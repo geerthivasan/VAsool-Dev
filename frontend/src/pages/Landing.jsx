@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { toast } from '../hooks/use-toast';
 import { mockTeamMembers, mockAgents } from '../mockData';
+import { demoContactAPI } from '../api';
 import { TrendingUp, Shield, Users, CheckCircle2, Briefcase, Zap, ArrowRight, PlayCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
