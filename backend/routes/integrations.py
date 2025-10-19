@@ -1,15 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
 from auth_utils import get_current_user
 from database import init_db
 from datetime import datetime
 import os
+import secrets
 
 router = APIRouter(prefix="/api/integrations", tags=["Integrations"])
 
-class ZohoCredentials(BaseModel):
-    email: EmailStr
-    password: str
+# Zoho OAuth Configuration
+ZOHO_CLIENT_ID = os.environ.get('ZOHO_CLIENT_ID', 'demo_client_id')
+ZOHO_CLIENT_SECRET = os.environ.get('ZOHO_CLIENT_SECRET', 'demo_client_secret')
+ZOHO_REDIRECT_URI = os.environ.get('ZOHO_REDIRECT_URI', 'http://localhost:3000/zoho/callback')
+ZOHO_AUTH_URL = "https://accounts.zoho.com/oauth/v2/auth"
+ZOHO_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
+
+class ZohoAuthUrlResponse(BaseModel):
+    auth_url: str
+
+class ZohoCallbackRequest(BaseModel):
+    code: str
+    state: str
 
 class IntegrationResponse(BaseModel):
     success: bool
@@ -21,46 +32,82 @@ class IntegrationStatus(BaseModel):
     zohobooks_email: str = None
     last_sync: str = None
 
-@router.post("/zoho/connect", response_model=IntegrationResponse)
-async def connect_zoho(
-    credentials: ZohoCredentials,
+@router.get("/zoho/auth-url", response_model=ZohoAuthUrlResponse)
+async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
+    """Generate Zoho OAuth 2.0 authorization URL"""
+    
+    # Generate state token for CSRF protection
+    state = secrets.token_urlsafe(32)
+    
+    # Store state in session/db for verification (in production)
+    db = init_db()
+    await db.oauth_states.insert_one({
+        "user_id": current_user["user_id"],
+        "state": state,
+        "created_at": datetime.utcnow()
+    })
+    
+    # Build OAuth URL
+    auth_url = (
+        f"{ZOHO_AUTH_URL}"
+        f"?client_id={ZOHO_CLIENT_ID}"
+        f"&response_type=code"
+        f"&scope=ZohoBooks.fullaccess.all"
+        f"&redirect_uri={ZOHO_REDIRECT_URI}"
+        f"&state={state}"
+        f"&access_type=offline"
+    )
+    
+    return ZohoAuthUrlResponse(auth_url=auth_url)
+
+@router.post("/zoho/callback", response_model=IntegrationResponse)
+async def zoho_oauth_callback(
+    callback_data: ZohoCallbackRequest,
     current_user: dict = Depends(get_current_user)
 ):
+    """Handle OAuth callback from Zoho"""
     db = init_db()
     user_id = current_user["user_id"]
     
-    # In production, this would:
-    # 1. Validate credentials with Zoho OAuth 2.0
-    # 2. Store encrypted access tokens
-    # 3. Set up webhook for data sync
+    # Verify state token (CSRF protection)
+    state_record = await db.oauth_states.find_one({
+        "user_id": user_id,
+        "state": callback_data.state
+    })
     
-    # For MVP, we'll store the connection status
+    if not state_record:
+        raise HTTPException(status_code=400, detail="Invalid state token")
+    
+    # In production, exchange code for access token here
+    # For MVP, we'll mark integration as connected
+    
     integration_data = {
         "user_id": user_id,
         "type": "zohobooks",
-        "email": credentials.email,
         "connected_at": datetime.utcnow(),
         "status": "active",
-        "last_sync": datetime.utcnow()
+        "last_sync": datetime.utcnow(),
+        "auth_code": callback_data.code  # In production, store encrypted access_token
     }
     
-    # Check if integration already exists
+    # Check if integration exists
     existing = await db.integrations.find_one({
         "user_id": user_id,
         "type": "zohobooks"
     })
     
     if existing:
-        # Update existing integration
         await db.integrations.update_one(
             {"user_id": user_id, "type": "zohobooks"},
             {"$set": integration_data}
         )
         integration_id = str(existing["_id"])
     else:
-        # Create new integration
         result = await db.integrations.insert_one(integration_data)
         integration_id = str(result.inserted_id)
+    
+    # Clean up state token
+    await db.oauth_states.delete_one({"_id": state_record["_id"]})
     
     return IntegrationResponse(
         success=True,
