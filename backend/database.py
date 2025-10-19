@@ -5,7 +5,7 @@ import os
 def get_database():
     mongo_url = os.environ.get('MONGO_URL')
     if not mongo_url:
-        raise ValueError(\"MONGO_URL environment variable not set\")
+        raise ValueError("MONGO_URL environment variable not set")
     
     client = AsyncIOMotorClient(mongo_url)
     db_name = os.environ.get('DB_NAME', 'vasool_db')
