@@ -84,15 +84,21 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
           }, 1000);
         }
       } else {
-        // Try real OAuth flow
+        // Close modal before redirect to avoid iframe issues
+        onOpenChange(false);
+        
+        // Get OAuth URL from backend
         const response = await axios.get(
           `${API}/integrations/zoho/auth-url`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (response.data.auth_url) {
-          // Redirect to Zoho's OAuth page
-          window.location.href = response.data.auth_url;
+          // Small delay to ensure modal closes, then redirect at top level
+          setTimeout(() => {
+            // Force top-level redirect (not in iframe/modal)
+            window.top.location.href = response.data.auth_url;
+          }, 100);
         }
       }
     } catch (error) {
