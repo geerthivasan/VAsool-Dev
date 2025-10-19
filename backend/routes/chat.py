@@ -4,20 +4,85 @@ from auth_utils import get_current_user
 from database import init_db
 from datetime import datetime
 import uuid
+import os
+from openai import OpenAI
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
-def generate_ai_response(user_message: str) -> str:
-    """Generate mock AI response based on user message"""
-    lowerMessage = user_message.lower()
-    if 'portfolio' in lowerMessage or 'collection' in lowerMessage:
-        return "I can help you analyze your collections portfolio. Based on current data, you have several accounts requiring attention. Would you like me to prioritize them by recovery probability or outstanding amount?"
-    elif 'payment' in lowerMessage or 'track' in lowerMessage:
-        return "I'm tracking all payment activities in real-time. Let me pull up the latest payment reconciliation report for you. Any specific time period you'd like to review?"
-    elif 'strategy' in lowerMessage or 'optimize' in lowerMessage:
-        return "I can help optimize your collection strategies. Our AI agents have identified several accounts that would benefit from personalized outreach. Shall I draft some communication templates?"
-    else:
-        return "I understand you're asking about collections management. I can help with portfolio analysis, payment tracking, strategy optimization, and compliance monitoring. What specific area would you like to explore?"
+# Initialize OpenAI client
+OPENAI_API_KEY = "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"
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+async def get_zoho_context(user_id: str) -> str:
+    """Get Zoho Books integration context for the user"""
+    db = init_db()
+    
+    integration = await db.integrations.find_one({
+        "user_id": user_id,
+        "type": "zohobooks",
+        "status": "active"
+    })
+    
+    if integration:
+        return f"User has Zoho Books connected (Email: {integration.get('email')}). You can help them analyze their accounting data, invoices, payments, and financial reports from Zoho Books."
+    
+    return "User does not have any accounting system connected yet."
+
+async def generate_ai_response(user_message: str, user_id: str, chat_history: list = None) -> str:
+    """Generate AI response using OpenAI GPT with context"""
+    
+    # Get integration context
+    zoho_context = await get_zoho_context(user_id)
+    
+    # Build system prompt with context
+    system_prompt = f"""You are an AI Collections Assistant for Vasool, a credit collections management platform. 
+    
+Your role is to help users with:
+- Analyzing collections portfolios and outstanding debts
+- Tracking payments and reconciliation
+- Optimizing collection strategies
+- Providing insights on recovery rates and debtor behavior
+- Understanding compliance requirements (RBI guidelines)
+- Managing communication with debtors
+
+Integration Status:
+{zoho_context}
+
+When the user has Zoho Books connected, you can help them:
+- Analyze invoice data and outstanding receivables
+- Track payment patterns
+- Identify overdue accounts
+- Suggest collection strategies based on their accounting data
+- Generate financial reports for collections
+
+Be professional, empathetic, and provide actionable insights. Keep responses concise and focused on collections management."""
+
+    # Build messages array
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    # Add chat history if available (last 5 messages for context)
+    if chat_history:
+        for msg in chat_history[-5:]:
+            role = "user" if msg["sender"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["message"]})
+    
+    # Add current user message
+    messages.append({"role": "user", "content": user_message})
+    
+    try:
+        # Call OpenAI API
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",  # Using GPT-4o-mini which is more cost-effective
+            messages=messages,
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"OpenAI API Error: {str(e)}")
+        # Fallback to basic response
+        return "I'm here to help you with collections management. Could you please rephrase your question or provide more details?"
 
 @router.post("/message", response_model=ChatResponse)
 async def send_message(
