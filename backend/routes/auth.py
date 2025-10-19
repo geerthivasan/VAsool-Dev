@@ -67,7 +67,13 @@ async def login(credentials: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     db = init_db()
     
-    user = await db.users.find_one({"_id": current_user["user_id"]})
+    # Convert string user_id back to ObjectId for MongoDB query
+    try:
+        user_object_id = ObjectId(current_user["user_id"])
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    
+    user = await db.users.find_one({"_id": user_object_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
