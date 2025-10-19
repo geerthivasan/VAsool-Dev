@@ -1,17 +1,11 @@
 from fastapi import APIRouter, Depends
-from motor.motor_asyncio import AsyncIOMotorClient
 from models import ChatMessage, ChatResponse, ChatHistory, MessageItem
 from auth_utils import get_current_user
-import os
+from database import init_db
 from datetime import datetime
 import uuid
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
-
-# Get database
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
 
 def generate_ai_response(user_message: str) -> str:
     """Generate mock AI response based on user message"""
@@ -30,6 +24,8 @@ async def send_message(
     chat_msg: ChatMessage,
     current_user: dict = Depends(get_current_user)
 ):
+    db = init_db()
+    
     # Generate or use existing session_id
     session_id = chat_msg.session_id if chat_msg.session_id else str(uuid.uuid4())
     user_id = current_user["user_id"]
@@ -71,6 +67,7 @@ async def get_chat_history(
     session_id: str = None,
     current_user: dict = Depends(get_current_user)
 ):
+    db = init_db()
     user_id = current_user["user_id"]
     
     # Build query
