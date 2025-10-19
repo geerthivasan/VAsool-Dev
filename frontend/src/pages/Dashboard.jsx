@@ -276,49 +276,47 @@ const Dashboard = () => {
         ) : (
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="max-w-6xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="p-6">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Total Outstanding</h3>
-                  <p className="text-3xl font-bold text-gray-900">₹45.2L</p>
-                  <p className="text-sm text-green-600 mt-1">↓ 12% from last month</p>
-                </Card>
-                <Card className="p-6">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Recovery Rate</h3>
-                  <p className="text-3xl font-bold text-gray-900">68%</p>
-                  <p className="text-sm text-green-600 mt-1">↑ 8% from last month</p>
-                </Card>
-                <Card className="p-6">
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Active Accounts</h3>
-                  <p className="text-3xl font-bold text-gray-900">124</p>
-                  <p className="text-sm text-gray-500 mt-1">Across all agents</p>
-                </Card>
-              </div>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Payment received - INV-2024-001</p>
-                      <p className="text-sm text-gray-500">2 hours ago</p>
-                    </div>
-                    <span className="text-green-600 font-semibold">₹25,000</span>
+              {analytics ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <Card className="p-6">
+                      <h3 className="text-sm font-medium text-gray-600 mb-2">Total Outstanding</h3>
+                      <p className="text-3xl font-bold text-gray-900">₹{(analytics.total_outstanding / 100000).toFixed(1)}L</p>
+                      <p className="text-sm text-green-600 mt-1">↓ 12% from last month</p>
+                    </Card>
+                    <Card className="p-6">
+                      <h3 className="text-sm font-medium text-gray-600 mb-2">Recovery Rate</h3>
+                      <p className="text-3xl font-bold text-gray-900">{analytics.recovery_rate}%</p>
+                      <p className="text-sm text-green-600 mt-1">↑ 8% from last month</p>
+                    </Card>
+                    <Card className="p-6">
+                      <h3 className="text-sm font-medium text-gray-600 mb-2">Active Accounts</h3>
+                      <p className="text-3xl font-bold text-gray-900">{analytics.active_accounts}</p>
+                      <p className="text-sm text-gray-500 mt-1">Across all agents</p>
+                    </Card>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">New collection strategy activated</p>
-                      <p className="text-sm text-gray-500">5 hours ago</p>
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+                    <div className="space-y-3">
+                      {analytics.recent_activity.map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{activity.title}</p>
+                            <p className="text-sm text-gray-500">{activity.description}</p>
+                          </div>
+                          {activity.amount && (
+                            <span className="text-green-600 font-semibold">₹{activity.amount.toLocaleString()}</span>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-blue-600 font-semibold">15 accounts</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Communication sent - Account XYZ</p>
-                      <p className="text-sm text-gray-500">1 day ago</p>
-                    </div>
-                    <span className="text-gray-600 font-semibold">Email</span>
-                  </div>
+                  </Card>
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-gray-500">Loading analytics...</p>
                 </div>
-              </Card>
+              )}
             </div>
           </div>
         )}
