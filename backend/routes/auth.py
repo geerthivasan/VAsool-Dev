@@ -1,19 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends
-from motor.motor_asyncio import AsyncIOMotorClient
 from models import UserSignup, UserLogin, LoginResponse, UserResponse, StandardResponse
 from auth_utils import hash_password, verify_password, create_access_token, get_current_user
-import os
+from database import init_db
 from datetime import datetime
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-# Get database
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
 @router.post("/signup", response_model=StandardResponse)
 async def signup(user_data: UserSignup):
+    db = init_db()
+    
     # Check if user already exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
@@ -38,6 +34,8 @@ async def signup(user_data: UserSignup):
 
 @router.post("/login", response_model=LoginResponse)
 async def login(credentials: UserLogin):
+    db = init_db()
+    
     # Find user
     user = await db.users.find_one({"email": credentials.email})
     if not user:
@@ -66,6 +64,8 @@ async def login(credentials: UserLogin):
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
+    db = init_db()
+    
     user = await db.users.find_one({"_id": current_user["user_id"]})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
