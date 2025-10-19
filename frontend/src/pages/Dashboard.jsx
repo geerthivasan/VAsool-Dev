@@ -5,6 +5,11 @@ import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { MessageSquare, BarChart3, Plus, AlertCircle, Send, Leaf, Link as LinkIcon, ChevronLeft } from 'lucide-react';
 import { chatAPI, dashboardAPI } from '../api';
+import IntegrationsModal from '../components/IntegrationsModal';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -14,6 +19,8 @@ const Dashboard = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [integrationsModalOpen, setIntegrationsModalOpen] = useState(false);
+  const [integrationStatus, setIntegrationStatus] = useState({ zohobooks_connected: false });
   const messagesEndRef = useRef(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
