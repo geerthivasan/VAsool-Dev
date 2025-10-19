@@ -236,12 +236,17 @@ const Dashboard = () => {
             {activeTab === 'chat' ? 'Vasool AI Assistant' : 'Dashboard Overview'}
           </h1>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIntegrationsModalOpen(true)}
+            >
               <LinkIcon className="w-4 h-4 mr-2" />
               Connect
             </Button>
             <Button onClick={() => {
               localStorage.removeItem('isAuthenticated');
+              localStorage.removeItem('authToken');
               navigate('/');
             }}>
               Logout
