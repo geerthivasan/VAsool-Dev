@@ -28,23 +28,41 @@ const Landing = () => {
   const [demoForm, setDemoForm] = useState({ name: '', email: '', company: '', phone: '' });
   const [salesForm, setSalesForm] = useState({ name: '', email: '', message: '' });
 
-  const handleDemoSubmit = (e) => {
+  const handleDemoSubmit = async (e) => {
     e.preventDefault();
-    toast({
-      title: "Demo Scheduled!",
-      description: "We'll contact you shortly to schedule your demo.",
-    });
-    setDemoFormOpen(false);
-    setDemoForm({ name: '', email: '', company: '', phone: '' });
+    try {
+      await demoContactAPI.scheduleDemo(demoForm);
+      toast({
+        title: "Demo Scheduled!",
+        description: "We'll contact you shortly to schedule your demo.",
+      });
+      setDemoFormOpen(false);
+      setDemoForm({ name: '', email: '', company: '', phone: '' });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to schedule demo. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSalesSubmit = (e) => {
+  const handleSalesSubmit = async (e) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent!",
-      description: "Our sales team will reach out to you soon.",
-    });
-    setSalesForm({ name: '', email: '', message: '' });
+    try {
+      await demoContactAPI.contactSales(salesForm);
+      toast({
+        title: "Message Sent!",
+        description: "Our sales team will reach out to you soon.",
+      });
+      setSalesForm({ name: '', email: '', message: '' });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
