@@ -3,6 +3,7 @@ from models import UserSignup, UserLogin, LoginResponse, UserResponse, StandardR
 from auth_utils import hash_password, verify_password, create_access_token, get_current_user
 from database import init_db
 from datetime import datetime
+from bson import ObjectId
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
