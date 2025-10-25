@@ -225,8 +225,8 @@ async def get_collections(current_user: dict = Depends(get_current_user)):
     )
 
 
-@router.get("/analytics", response_model=AnalyticsData)
-async def get_analytics_data(current_user: dict = Depends(get_current_user)):
+@router.get("/analytics-trends", response_model=AnalyticsData)
+async def get_analytics_trends(current_user: dict = Depends(get_current_user)):
     """Get analytics data - trends and metrics"""
     user_id = current_user["user_id"]
     
