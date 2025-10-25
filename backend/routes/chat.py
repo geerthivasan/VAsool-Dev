@@ -83,7 +83,17 @@ async def generate_ai_response(user_message: str, user_id: str, chat_history: li
     
     # Get integration context
     zoho_context = await get_zoho_context(user_id)
-    is_connected = "has Zoho Books connected" in zoho_context and "REAL accounting data" in zoho_context
+    
+    # Check if user has any Zoho Books integration (demo or production)
+    db = init_db()
+    integration = await db.integrations.find_one({
+        "user_id": user_id,
+        "type": "zohobooks",
+        "status": "active"
+    })
+    
+    is_connected = integration is not None
+    is_production_mode = integration and integration.get("mode") == "production"
     
     # Fetch actual Zoho data if connected
     zoho_data_context = ""
