@@ -239,11 +239,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All backend APIs tested and working"
+    - "Fix Frontend Error - FastAPI Validation Error Handling"
+    - "Zoho Books Integration - Fetch Dashboard Data"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "testing"
     message: "Completed comprehensive backend API testing for Vasool clone application. All 8 backend APIs tested successfully with 100% pass rate. Fixed one critical issue with /api/auth/me endpoint (ObjectId conversion). All authentication, demo/contact, chat, and dashboard APIs are working correctly. Backend is ready for production use."
+  - agent: "main"
+    message: "Fixed frontend runtime error by adding custom exception handlers in FastAPI. Now all validation errors and exceptions return user-friendly string messages instead of complex objects. Next step: implement Zoho Books data fetching for dashboard tabs."
