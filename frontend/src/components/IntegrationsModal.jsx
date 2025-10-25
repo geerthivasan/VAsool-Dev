@@ -69,102 +69,16 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Connect Integrations</DialogTitle>
-          <DialogDescription>
-            Connect your accounting systems and bank accounts to enhance your collections management
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Connect Integrations</DialogTitle>
+            <DialogDescription>
+              Connect your accounting systems and bank accounts to enhance your collections management
+            </DialogDescription>
+          </DialogHeader>
 
-        {activeIntegration === 'zohobooks' ? (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setActiveIntegration(null)}
-              >
-                ← Back
-              </Button>
-              <h3 className="text-lg font-semibold">Connect Zoho Books</h3>
-            </div>
-            
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Building2 className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Secure OAuth 2.0 Connection</h4>
-                      <p className="text-sm text-gray-600">
-                        You'll be redirected to Zoho Books to securely authorize access to your accounting data.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-3">What we'll access:</h5>
-                    <ul className="space-y-2 text-sm text-gray-600">
-                      <li className="flex items-start">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Read your invoices and outstanding payments</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>Access customer payment history</span>
-                      </li>
-                      <li className="flex items-start">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>View financial reports for collections analysis</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm text-green-800">
-                      <strong className="flex items-center mb-1">
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Secure & Safe
-                      </strong>
-                      We use OAuth 2.0 industry standard. Your Zoho credentials are never shared with us. 
-                      You can revoke access anytime from your Zoho account settings.
-                    </p>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>🔧 Connection Options:</strong>
-                      <br />
-                      <strong>Demo Mode:</strong> Test integration with simulated data (no Zoho account needed)
-                      <br />
-                      <strong>Production Mode:</strong> Connect your real Zoho Books account (requires OAuth setup)
-                      <br />
-                      <span className="text-xs mt-2 block italic">
-                        Note: Production OAuth will redirect you to Zoho's login page in a new window
-                      </span>
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={handleZohoConnect}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    disabled={loading}
-                  >
-                    {loading ? 'Connecting...' : 'Connect with Zoho Books'}
-                  </Button>
-                  
-                  <p className="text-xs text-center text-gray-500 mt-2">
-                    By connecting, you agree to Zoho's data access permissions
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
           <div className="space-y-6">
             {/* Accounting Systems */}
             <div>
@@ -185,7 +99,7 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
                           ? 'cursor-pointer hover:shadow-md transition-shadow'
                           : 'opacity-60'
                       }`}
-                      onClick={() => system.available && !isConnected && setActiveIntegration(system.id)}
+                      onClick={() => system.available && !isConnected && system.id === 'zohobooks' && handleZohoClick()}
                     >
                       {isConnected && (
                         <div className="absolute top-2 right-2">
@@ -248,9 +162,22 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
               </Card>
             </div>
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Zoho Setup Modal */}
+      <ZohoSetupModal 
+        open={zohoSetupOpen} 
+        onOpenChange={setZohoSetupOpen}
+        onSuccess={() => {
+          toast({
+            title: "Connection Successful!",
+            description: "Zoho Books has been connected.",
+          });
+          window.location.reload();
+        }}
+      />
+    </>
   );
 };
 
