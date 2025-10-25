@@ -567,6 +567,120 @@ class VasoolAPITester:
             self.log_result("Validation Error Handling", False, f"Expected validation error (422), got status {response.status_code}")
             
         return False
+
+    def test_zoho_oauth_setup(self):
+        """Test Zoho OAuth setup endpoint with user-provided credentials"""
+        print("\n=== Testing Zoho OAuth Setup ===")
+        
+        if not self.auth_token:
+            self.log_result("Zoho OAuth Setup", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        # Test credentials provided by user
+        test_credentials = {
+            "client_id": "1000.OH8JNIK1UP8VEGHLM6QN4BC6CM801K",
+            "client_secret": "c7ff157ccf95db7751ed218370973cf86db0477597"
+        }
+        
+        success_count = 0
+        total_tests = 3
+        
+        # Test 1: organization_id as empty string
+        test_data_1 = {**test_credentials, "organization_id": ""}
+        response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", test_data_1, headers)
+        
+        if response is None:
+            self.log_result("Zoho OAuth Setup (empty org_id)", False, "Request failed - connection error")
+        elif response.status_code == 200:
+            try:
+                data = response.json()
+                if data.get("auth_url") and data.get("state"):
+                    if "zoho" in data["auth_url"].lower() and "oauth" in data["auth_url"].lower():
+                        self.log_result("Zoho OAuth Setup (empty org_id)", True, "Valid auth URL and state returned", {
+                            "auth_url_length": len(data["auth_url"]),
+                            "state_length": len(data["state"]),
+                            "contains_client_id": test_credentials["client_id"] in data["auth_url"]
+                        })
+                        success_count += 1
+                    else:
+                        self.log_result("Zoho OAuth Setup (empty org_id)", False, "Auth URL doesn't appear to be valid Zoho OAuth URL")
+                else:
+                    self.log_result("Zoho OAuth Setup (empty org_id)", False, "Missing auth_url or state in response")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (empty org_id)", False, "Invalid JSON response")
+        else:
+            try:
+                error_data = response.json()
+                self.log_result("Zoho OAuth Setup (empty org_id)", False, f"Failed with status {response.status_code}: {error_data.get('detail', 'Unknown error')}")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (empty org_id)", False, f"Failed with status {response.status_code}")
+        
+        # Test 2: organization_id not included in request
+        test_data_2 = test_credentials.copy()  # No organization_id field
+        response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", test_data_2, headers)
+        
+        if response is None:
+            self.log_result("Zoho OAuth Setup (no org_id)", False, "Request failed - connection error")
+        elif response.status_code == 200:
+            try:
+                data = response.json()
+                if data.get("auth_url") and data.get("state"):
+                    if "zoho" in data["auth_url"].lower() and "oauth" in data["auth_url"].lower():
+                        self.log_result("Zoho OAuth Setup (no org_id)", True, "Valid auth URL and state returned", {
+                            "auth_url_length": len(data["auth_url"]),
+                            "state_length": len(data["state"]),
+                            "contains_client_id": test_credentials["client_id"] in data["auth_url"]
+                        })
+                        success_count += 1
+                    else:
+                        self.log_result("Zoho OAuth Setup (no org_id)", False, "Auth URL doesn't appear to be valid Zoho OAuth URL")
+                else:
+                    self.log_result("Zoho OAuth Setup (no org_id)", False, "Missing auth_url or state in response")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (no org_id)", False, "Invalid JSON response")
+        else:
+            try:
+                error_data = response.json()
+                self.log_result("Zoho OAuth Setup (no org_id)", False, f"Failed with status {response.status_code}: {error_data.get('detail', 'Unknown error')}")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (no org_id)", False, f"Failed with status {response.status_code}")
+        
+        # Test 3: organization_id as null
+        test_data_3 = {**test_credentials, "organization_id": None}
+        response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", test_data_3, headers)
+        
+        if response is None:
+            self.log_result("Zoho OAuth Setup (null org_id)", False, "Request failed - connection error")
+        elif response.status_code == 200:
+            try:
+                data = response.json()
+                if data.get("auth_url") and data.get("state"):
+                    if "zoho" in data["auth_url"].lower() and "oauth" in data["auth_url"].lower():
+                        self.log_result("Zoho OAuth Setup (null org_id)", True, "Valid auth URL and state returned", {
+                            "auth_url_length": len(data["auth_url"]),
+                            "state_length": len(data["state"]),
+                            "contains_client_id": test_credentials["client_id"] in data["auth_url"]
+                        })
+                        success_count += 1
+                    else:
+                        self.log_result("Zoho OAuth Setup (null org_id)", False, "Auth URL doesn't appear to be valid Zoho OAuth URL")
+                else:
+                    self.log_result("Zoho OAuth Setup (null org_id)", False, "Missing auth_url or state in response")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (null org_id)", False, "Invalid JSON response")
+        else:
+            try:
+                error_data = response.json()
+                self.log_result("Zoho OAuth Setup (null org_id)", False, f"Failed with status {response.status_code}: {error_data.get('detail', 'Unknown error')}")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Setup (null org_id)", False, f"Failed with status {response.status_code}")
+        
+        return success_count == total_tests
     
     def run_all_tests(self):
         """Run all API tests"""
