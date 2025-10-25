@@ -29,7 +29,7 @@ class ZohoCallbackRequest(BaseModel):
 class IntegrationResponse(BaseModel):
     success: bool
     message: str
-    integration_id: str = None
+    integration_id: Optional[str] = None
 
 class IntegrationStatus(BaseModel):
     zohobooks_connected: bool
