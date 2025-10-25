@@ -81,23 +81,47 @@ const AnalyticsTab = () => {
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {dummyAnalyticsData.stats.map((stat, index) => (
+        {stats.map((stat, index) => (
           <StatCard key={index} stat={stat} />
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Collection Performance Trends */}
+        {/* Monthly Trends */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-              Collection Performance Trends
+              Monthly Collection Trends
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {dummyAnalyticsData.performanceTrends.map((item, index) => (
+              {analyticsData.monthly_trends.map((item, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">{item.month}</span>
+                    <div className="text-right">
+                      <span className="text-sm font-bold text-green-600">{formatCurrency(item.collected)}</span>
+                      <span className="text-xs text-gray-500 ml-2">collected</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>Outstanding: {formatCurrency(item.outstanding)}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className="h-3 rounded-full bg-gradient-to-r from-green-500 to-blue-500"
+                      style={{ 
+                        width: `${Math.min((item.collected / (item.collected + item.outstanding)) * 100, 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-700">{item.period}</span>
