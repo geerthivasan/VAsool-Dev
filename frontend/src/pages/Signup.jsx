@@ -47,9 +47,15 @@ const Signup = () => {
         navigate('/login');
       }
     } catch (error) {
+      const errorMessage = error.response?.data?.detail 
+        ? (typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : 'Failed to create account')
+        : 'Failed to create account';
+        
       toast({
         title: "Signup Failed",
-        description: error.response?.data?.detail || "Failed to create account",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
