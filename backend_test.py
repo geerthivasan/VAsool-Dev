@@ -845,6 +845,9 @@ class VasoolAPITester:
         # Validation error handling
         validation_success = self.test_validation_error_handling()
         
+        # Zoho OAuth redirect URI verification (specific test requested)
+        zoho_redirect_uri_success = self.test_zoho_oauth_redirect_uri_verification()
+        
         # Zoho OAuth setup testing
         zoho_oauth_success = self.test_zoho_oauth_setup()
         
