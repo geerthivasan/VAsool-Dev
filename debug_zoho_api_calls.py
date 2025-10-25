@@ -203,7 +203,7 @@ class ZohoAPIDebugger:
         """Fix integration mode to production"""
         print("\n🔧 Fixing integration mode to production...")
         
-        if not self.db or not self.user_id:
+        if self.db is None or not self.user_id:
             print("❌ No database connection or user ID")
             return False
             
