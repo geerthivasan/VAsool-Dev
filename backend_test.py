@@ -1208,7 +1208,10 @@ class VasoolAPITester:
 
 if __name__ == "__main__":
     tester = VasoolAPITester()
-    success = tester.run_all_tests()
+    
+    # Run specific Zoho integration tests as requested in review
+    print("Running Zoho Books Integration Tests as requested in review...")
+    success = tester.run_zoho_integration_tests()
     
     # Exit with appropriate code
     sys.exit(0 if success else 1)
