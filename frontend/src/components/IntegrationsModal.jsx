@@ -5,28 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Building2, Landmark, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
 import ZohoSetupModal from './ZohoSetupModal';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const IntegrationsModal = ({ open, onOpenChange }) => {
   const [activeIntegration, setActiveIntegration] = useState(null);
   const [zohoSetupOpen, setZohoSetupOpen] = useState(false);
   const [connectedIntegrations, setConnectedIntegrations] = useState([]);
-  const [oauthConfigured, setOauthConfigured] = useState(false);
-
-  // Check OAuth configuration status on mount
-  React.useEffect(() => {
-    const checkOAuthConfig = async () => {
-      try {
-        const response = await axios.get(`${API}/integrations/zoho/config-status`);
-        setOauthConfigured(response.data.configured);
-      } catch (error) {
-        console.error('Failed to check OAuth config:', error);
-      }
-    };
-    
-    if (open) {
-      checkOAuthConfig();
-    }
-  }, [open]);
 
   const accountingSystems = [
     {
