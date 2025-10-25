@@ -193,7 +193,8 @@ async def zoho_oauth_callback(
     # Use user's credentials for token exchange
     client_id = user_oauth["client_id"]
     client_secret = user_oauth["client_secret"]
-    redirect_uri = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/zoho/callback"
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    redirect_uri = f"{frontend_url}/zoho/callback"
     
     # Exchange authorization code for access token
     try:
