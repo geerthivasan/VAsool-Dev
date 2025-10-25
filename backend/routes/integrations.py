@@ -179,25 +179,30 @@ async def zoho_oauth_callback(
     db = init_db()
     user_id = current_user["user_id"]
     
-    # Verify state token (CSRF protection)
-    state_record = await db.oauth_states.find_one({
+    # Get user's OAuth credentials and verify state
+    user_oauth = await db.user_oauth_credentials.find_one({
         "user_id": user_id,
         "state": callback_data.state
     })
     
-    if not state_record:
-        raise HTTPException(status_code=400, detail="Invalid state token")
+    if not user_oauth:
+        raise HTTPException(status_code=400, detail="Invalid state token or OAuth setup not found")
+    
+    # Use user's credentials for token exchange
+    client_id = user_oauth["client_id"]
+    client_secret = user_oauth["client_secret"]
+    redirect_uri = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/zoho/callback"
     
     # Exchange authorization code for access token
     try:
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(
+        async with httpx.AsyncClient() as http_client:
+            token_response = await http_client.post(
                 ZOHO_TOKEN_URL,
                 data={
                     "code": callback_data.code,
-                    "client_id": ZOHO_CLIENT_ID,
-                    "client_secret": ZOHO_CLIENT_SECRET,
-                    "redirect_uri": ZOHO_REDIRECT_URI,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": redirect_uri,
                     "grant_type": "authorization_code"
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"}
@@ -215,12 +220,16 @@ async def zoho_oauth_callback(
             integration_data = {
                 "user_id": user_id,
                 "type": "zohobooks",
+                "email": current_user.get("email"),
+                "organization_id": user_oauth.get("organization_id"),
                 "connected_at": datetime.utcnow(),
                 "status": "active",
                 "last_sync": datetime.utcnow(),
                 "access_token": token_data.get("access_token"),  # Should be encrypted in production
                 "refresh_token": token_data.get("refresh_token"),  # Should be encrypted in production
                 "token_expires_in": token_data.get("expires_in"),
+                "client_id": client_id,
+                "client_secret": client_secret,  # Should be encrypted in production
                 "mode": "production"
             }
             
@@ -240,8 +249,8 @@ async def zoho_oauth_callback(
                 result = await db.integrations.insert_one(integration_data)
                 integration_id = str(result.inserted_id)
             
-            # Clean up state token
-            await db.oauth_states.delete_one({"_id": state_record["_id"]})
+            # Clean up OAuth credentials document
+            await db.user_oauth_credentials.delete_one({"_id": user_oauth["_id"]})
             
             return IntegrationResponse(
                 success=True,
