@@ -90,6 +90,14 @@ async def generate_ai_response(user_message: str, user_id: str, chat_history: li
     if is_connected:
         zoho_data_context = await fetch_zoho_data_for_query(user_id, user_message)
     
+    dummy_data_instruction = ""
+    if not is_connected:
+        dummy_data_instruction = "IMPORTANT: The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."
+    
+    real_data_section = ""
+    if is_connected and zoho_data_context:
+        real_data_section = f"REAL DATA FROM ZOHO BOOKS:\n{zoho_data_context}\n\nUse this ACTUAL data to answer the user's question accurately. Reference specific invoice numbers, customer names, and amounts from the data above."
+    
     # Build system prompt with context
     system_prompt = f"""You are an AI Collections Assistant for Vasool, a credit collections management platform. 
 
@@ -104,9 +112,9 @@ Your role is to help users with:
 Integration Status:
 {zoho_context}
 
-{"" if is_connected else "IMPORTANT: The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."}
+{dummy_data_instruction}
 
-{f"REAL DATA FROM ZOHO BOOKS:\n{zoho_data_context}\n\nUse this ACTUAL data to answer the user's question accurately. Reference specific invoice numbers, customer names, and amounts from the data above." if is_connected and zoho_data_context else ""}
+{real_data_section}
 
 When the user has Zoho Books connected, you can help them:
 - Analyze invoice data and outstanding receivables
