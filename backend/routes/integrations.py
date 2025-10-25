@@ -73,6 +73,23 @@ async def demo_connect_zoho(current_user: dict = Depends(get_current_user)):
         integration_id=integration_id
     )
 
+@router.get("/zoho/config-status")
+async def get_zoho_config_status():
+    """Check if Zoho OAuth is properly configured (for admin/debugging)"""
+    is_configured = not (
+        ZOHO_CLIENT_ID.startswith('1000.YOUR') or 
+        ZOHO_CLIENT_SECRET == 'your_client_secret'
+    )
+    
+    return {
+        "configured": is_configured,
+        "client_id_set": bool(ZOHO_CLIENT_ID and not ZOHO_CLIENT_ID.startswith('1000.YOUR')),
+        "client_secret_set": bool(ZOHO_CLIENT_SECRET and ZOHO_CLIENT_SECRET != 'your_client_secret'),
+        "redirect_uri": ZOHO_REDIRECT_URI,
+        "message": "OAuth configured - users can connect with Zoho login" if is_configured 
+                   else "OAuth not configured - users will see Demo Mode option. Add ZOHO_CLIENT_ID and ZOHO_CLIENT_SECRET to enable real OAuth."
+    }
+
 @router.get("/zoho/auth-url", response_model=ZohoAuthUrlResponse)
 async def get_zoho_auth_url(current_user: dict = Depends(get_current_user)):
     """Generate Zoho OAuth 2.0 authorization URL following official Zoho Books API documentation"""
