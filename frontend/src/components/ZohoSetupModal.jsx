@@ -49,22 +49,15 @@ const ZohoSetupModal = ({ open, onOpenChange, onSuccess }) => {
       );
 
       if (response.data.auth_url) {
-        // Store the auth URL for manual redirect if needed
+        // Store the auth URL
         setAuthUrl(response.data.auth_url);
+        setLoading(false);
         
-        // Close modal
-        onOpenChange(false);
-        
-        // Show toast with manual option
+        // Show success message and let user click to proceed
         toast({
-          title: "Redirecting to Zoho...",
-          description: "If redirect doesn't work, click the notification to open manually",
+          title: "OAuth URL Generated",
+          description: "Click the button below to login with Zoho",
         });
-        
-        // Try automatic redirect
-        setTimeout(() => {
-          window.location.replace(response.data.auth_url);
-        }, 500);
       }
     } catch (error) {
       const errorMessage = error.response?.data?.detail 
