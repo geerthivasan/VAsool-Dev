@@ -106,7 +106,7 @@ class ZohoInvestigationTester:
         print("📊 STEP 1: INVESTIGATING INTEGRATION STATUS IN DATABASE")
         print("="*60)
         
-        if not self.db:
+        if self.db is None:
             print("❌ No database connection")
             return None
             
