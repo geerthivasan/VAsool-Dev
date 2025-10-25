@@ -273,6 +273,18 @@ backend:
         agent: "testing"
         comment: "All three new dashboard endpoints (collections, analytics-trends, reconciliation) are implemented and working correctly. They check for Zoho integration status and return real data if connected (production mode) or mock data if not connected. Integration status endpoint confirms Zoho is not connected, and all endpoints return proper mock data with correct structure."
 
+  - task: "Zoho OAuth Setup Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/routes/integrations.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/integrations/zoho/user-oauth-setup tested successfully with user-provided credentials (client_id: 1000.OH8JNIK1UP8VEGHLM6QN4BC6CM801K, client_secret: c7ff157ccf95db7751ed218370973cf86db0477597). All three organization_id scenarios tested: empty string, not included, and null value. All return valid auth_url containing Zoho OAuth URL and proper state token for CSRF protection. No validation errors occur when organization_id is optional."
+
 frontend:
   # Frontend testing not performed by testing agent as per instructions
 
