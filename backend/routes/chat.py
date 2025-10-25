@@ -6,6 +6,14 @@ from datetime import datetime
 import uuid
 import os
 from openai import OpenAI
+from zoho_api_helper import (
+    get_user_zoho_credentials, 
+    get_invoices, 
+    get_customers,
+    get_outstanding_receivables,
+    search_invoices_by_customer
+)
+import json
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
@@ -23,21 +31,68 @@ async def get_zoho_context(user_id: str) -> str:
         "status": "active"
     })
     
-    if integration:
-        return f"User has Zoho Books connected (Email: {integration.get('email')}). You can help them analyze their accounting data, invoices, payments, and financial reports from Zoho Books."
+    if integration and integration.get("mode") == "production":
+        # User has REAL Zoho Books connected
+        return f"User has Zoho Books connected (Email: {integration.get('email', 'N/A')}). You have access to their REAL accounting data via API. You can analyze actual invoices, payments, customers, and financial reports."
+    elif integration and integration.get("mode") == "demo":
+        return "User has Zoho Books in DEMO mode. You do NOT have access to real data."
     
-    return "User does not have any accounting system connected yet."
+    return "User does not have any accounting software connected yet."
+
+async def fetch_zoho_data_for_query(user_id: str, query: str) -> str:
+    """Fetch relevant Zoho Books data based on user's question"""
+    integration = await get_user_zoho_credentials(user_id)
+    
+    if not integration or integration.get("mode") != "production":
+        return "No real Zoho Books data available."
+    
+    query_lower = query.lower()
+    context = []
+    
+    try:
+        # Fetch relevant data based on query
+        if any(word in query_lower for word in ['invoice', 'overdue', 'outstanding', 'unpaid']):
+            invoices = await get_invoices(user_id, status="overdue")
+            if invoices:
+                top_overdue = sorted(invoices, key=lambda x: float(x.get('balance', 0)), reverse=True)[:5]
+                context.append("Top 5 Overdue Invoices:")
+                for inv in top_overdue:
+                    context.append(f"- Invoice #{inv.get('invoice_number')}: {inv.get('customer_name')} - ₹{inv.get('balance')} (Due: {inv.get('due_date')})")
+        
+        if any(word in query_lower for word in ['customer', 'client', 'account']):
+            customers = await get_customers(user_id)
+            if customers:
+                context.append(f"\nTotal Customers: {len(customers)}")
+                context.append("Recent Customers:")
+                for cust in customers[:3]:
+                    context.append(f"- {cust.get('contact_name')}: Outstanding ₹{cust.get('outstanding_receivable_amount', 0)}")
+        
+        if any(word in query_lower for word in ['receivable', 'collection', 'summary', 'total']):
+            receivables = await get_outstanding_receivables(user_id)
+            if receivables:
+                context.append(f"\nOutstanding Receivables Summary:")
+                context.append(f"- Total Outstanding: ₹{receivables.get('total_outstanding', 0)}")
+        
+        return "\n".join(context) if context else "Fetched data but no specific matches found."
+        
+    except Exception as e:
+        return f"Error fetching Zoho data: {str(e)}"
 
 async def generate_ai_response(user_message: str, user_id: str, chat_history: list = None) -> str:
-    """Generate AI response using OpenAI GPT with context"""
+    """Generate AI response using OpenAI GPT with Zoho Books context"""
     
     # Get integration context
     zoho_context = await get_zoho_context(user_id)
-    is_connected = "has Zoho Books connected" in zoho_context
+    is_connected = "has Zoho Books connected" in zoho_context and "REAL accounting data" in zoho_context
+    
+    # Fetch actual Zoho data if connected
+    zoho_data_context = ""
+    if is_connected:
+        zoho_data_context = await fetch_zoho_data_for_query(user_id, user_message)
     
     # Build system prompt with context
     system_prompt = f"""You are an AI Collections Assistant for Vasool, a credit collections management platform. 
-    
+
 Your role is to help users with:
 - Analyzing collections portfolios and outstanding debts
 - Tracking payments and reconciliation
@@ -49,7 +104,9 @@ Your role is to help users with:
 Integration Status:
 {zoho_context}
 
-IMPORTANT: {"" if is_connected else "The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."}
+{"" if is_connected else "IMPORTANT: The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."}
+
+{f"REAL DATA FROM ZOHO BOOKS:\n{zoho_data_context}\n\nUse this ACTUAL data to answer the user's question accurately. Reference specific invoice numbers, customer names, and amounts from the data above." if is_connected and zoho_data_context else ""}
 
 When the user has Zoho Books connected, you can help them:
 - Analyze invoice data and outstanding receivables
