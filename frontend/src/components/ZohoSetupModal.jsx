@@ -56,10 +56,8 @@ const ZohoSetupModal = ({ open, onOpenChange, onSuccess }) => {
         
         onOpenChange(false);
         
-        // Redirect to Zoho OAuth page
-        setTimeout(() => {
-          window.location.href = response.data.auth_url;
-        }, 1000);
+        // Redirect to Zoho OAuth page - use direct assignment for better compatibility
+        window.location.replace(response.data.auth_url);
       }
     } catch (error) {
       const errorMessage = error.response?.data?.detail 
