@@ -221,6 +221,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "GET /api/dashboard/analytics tested successfully. Returns comprehensive analytics data including total_outstanding, recovery_rate, active_accounts, and recent_activity."
+      - working: true
+        agent: "testing"
+        comment: "ZOHO DASHBOARD INTEGRATION VERIFIED: All dashboard endpoints working correctly with Zoho Books integration. When Zoho connected (demo mode), endpoints return appropriate data instead of mock data. Tested: 1) /api/dashboard/analytics - Returns real analytics with proper outstanding amounts and recovery rates, 2) /api/dashboard/collections - Returns invoice collections data, 3) /api/dashboard/analytics-trends - Returns monthly trends and collection metrics, 4) /api/dashboard/reconciliation - Returns matched/unmatched transaction data. All endpoints properly handle both connected and disconnected Zoho states."
   
   - task: "Dashboard Collections Endpoint"
     implemented: true
