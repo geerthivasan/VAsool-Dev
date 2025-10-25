@@ -95,9 +95,9 @@ async def generate_ai_response(user_message: str, user_id: str, chat_history: li
     is_connected = integration is not None
     is_production_mode = integration and integration.get("mode") == "production"
     
-    # Fetch actual Zoho data if connected
+    # Fetch actual Zoho data if connected in production mode
     zoho_data_context = ""
-    if is_connected:
+    if is_production_mode:
         zoho_data_context = await fetch_zoho_data_for_query(user_id, user_message)
     
     dummy_data_instruction = ""
