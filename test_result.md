@@ -146,15 +146,18 @@ backend:
 
   - task: "Fix Frontend Error - FastAPI Validation Error Handling"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added custom exception handlers in FastAPI server to convert Pydantic RequestValidationError objects into user-friendly string messages. This prevents React from trying to render complex error objects. Also added general exception handler for uncaught errors."
+      - working: true
+        agent: "testing"
+        comment: "Tested validation error handling with POST /api/integrations/zoho/user-oauth-setup with missing required fields. Confirmed that validation errors now return user-friendly string messages like 'Invalid client_id: Field required' instead of complex Pydantic objects."
 
   - task: "Demo Scheduling API"
     implemented: true
