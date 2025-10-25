@@ -95,6 +95,13 @@ async def get_analytics(current_user: dict = Depends(get_current_user)):
         ),
     ]
     
+    return DashboardAnalytics(
+        total_outstanding=4520000,  # 45.2L
+        recovery_rate=68.0,
+        active_accounts=124,
+        recent_activity=activities
+    )
+    
 
 
 @router.get("/collections", response_model=CollectionsData)
