@@ -36,9 +36,15 @@ const Login = () => {
         navigate('/dashboard');
       }
     } catch (error) {
+      const errorMessage = error.response?.data?.detail 
+        ? (typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : 'Invalid email or password')
+        : 'Failed to login';
+        
       toast({
         title: "Login Failed",
-        description: error.response?.data?.detail || "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
