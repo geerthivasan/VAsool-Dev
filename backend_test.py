@@ -591,6 +591,14 @@ class VasoolAPITester:
         history_success = self.test_chat_history()
         dashboard_success = self.test_dashboard_analytics()
         
+        # NEW: Dashboard endpoints testing
+        collections_success = self.test_dashboard_collections()
+        analytics_trends_success = self.test_dashboard_analytics_trends()
+        reconciliation_success = self.test_dashboard_reconciliation()
+        
+        # Validation error handling
+        validation_success = self.test_validation_error_handling()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
@@ -612,6 +620,10 @@ class VasoolAPITester:
             critical_failures.append("Chat functionality completely broken")
         if not dashboard_success:
             critical_failures.append("Dashboard analytics not working")
+        if not (collections_success and analytics_trends_success and reconciliation_success):
+            critical_failures.append("New dashboard endpoints not working properly")
+        if not validation_success:
+            critical_failures.append("Validation error handling not user-friendly")
             
         if critical_failures:
             print("\n🚨 CRITICAL ISSUES:")
