@@ -43,6 +43,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": error_message}
     )
 
+# General exception handler
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Catch all exceptions and return user-friendly error"""
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred. Please try again later."}
+    )
+
 # Create a router with the /api prefix for basic routes
 api_router = APIRouter(prefix="/api")
 
