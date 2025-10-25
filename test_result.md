@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test all backend APIs for the Vasool clone application including authentication, demo/contact, chat, and dashboard APIs"
+user_problem_statement: "Fix frontend runtime error (Objects are not valid as a React child) and complete Zoho Books dashboard data integration"
 
 backend:
   - task: "Authentication API - User Signup"
