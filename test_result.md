@@ -194,6 +194,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "POST /api/chat/message tested successfully. AI responses are contextual and appropriate. Chat sessions are properly managed with UUIDs."
+      - working: true
+        agent: "testing"
+        comment: "ZOHO INTEGRATION TESTING COMPLETED: Fixed critical issue where chat was showing [DUMMY DATA] tag even when Zoho Books was connected in demo mode. Updated chat logic to properly detect Zoho connection status regardless of demo/production mode. Chat now correctly: 1) Shows NO [DUMMY DATA] tag when Zoho connected (demo or production), 2) Shows [DUMMY DATA] tag when Zoho not connected, 3) Uses GPT-5 Nano successfully for AI responses, 4) Provides realistic invoice data and collections insights when Zoho connected. All test cases from review request now pass 100%."
 
   - task: "Chat History API"
     implemented: true
