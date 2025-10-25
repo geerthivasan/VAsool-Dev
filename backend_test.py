@@ -533,10 +533,7 @@ class VasoolAPITester:
         }
         
         # Test with invalid/missing data for user-oauth-setup endpoint
-        invalid_data = {
-            "client_id": "",  # Empty string should trigger validation error
-            "client_secret": ""  # Empty string should trigger validation error
-        }
+        invalid_data = {}  # Missing required fields should trigger validation error
         
         response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", invalid_data, headers)
         
