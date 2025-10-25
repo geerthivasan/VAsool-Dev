@@ -250,17 +250,43 @@ const ZohoSetupModal = ({ open, onOpenChange, onSuccess }) => {
               </p>
             </div>
 
+            {authUrl && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="pt-4">
+                  <p className="text-sm text-blue-800 mb-3 flex items-start">
+                    <CheckCircle2 className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                    <span><strong>Ready to connect!</strong> Click the button below to login with your Zoho account and authorize the app.</span>
+                  </p>
+                  <a
+                    href={authUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block w-full"
+                  >
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      🚀 Login with Zoho Books
+                    </Button>
+                  </a>
+                  <p className="text-xs text-blue-600 mt-2 text-center">
+                    Opens in a new tab. After login, you'll be redirected back here.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>
                 ← Back to Instructions
               </Button>
-              <Button 
-                onClick={handleConnect} 
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {loading ? 'Connecting...' : 'Connect to Zoho Books'}
-              </Button>
+              {!authUrl && (
+                <Button 
+                  onClick={handleConnect} 
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? 'Connecting...' : 'Generate OAuth URL'}
+                </Button>
+              )}
             </div>
           </div>
         )}
