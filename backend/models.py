@@ -70,3 +70,48 @@ class DashboardAnalytics(BaseModel):
     recovery_rate: float
     active_accounts: int
     recent_activity: List[ActivityItem]
+
+# Collections Tab Models
+class InvoiceItem(BaseModel):
+    id: str
+    invoice_number: str
+    customer_name: str
+    amount: float
+    balance: float
+    due_date: str
+    status: str
+    days_overdue: Optional[int] = None
+
+class CollectionsData(BaseModel):
+    unpaid_invoices: List[InvoiceItem]
+    overdue_invoices: List[InvoiceItem]
+    total_unpaid: float
+    total_overdue: float
+
+# Analytics Tab Models
+class MonthlyMetric(BaseModel):
+    month: str
+    collected: float
+    outstanding: float
+
+class AnalyticsData(BaseModel):
+    monthly_trends: List[MonthlyMetric]
+    total_collected: float
+    total_outstanding: float
+    collection_efficiency: float
+    average_collection_time: int  # days
+
+# Reconciliation Tab Models  
+class ReconciliationItem(BaseModel):
+    id: str
+    date: str
+    description: str
+    amount: float
+    status: str  # "matched", "unmatched", "pending"
+    invoice_ref: Optional[str] = None
+
+class ReconciliationData(BaseModel):
+    matched_items: List[ReconciliationItem]
+    unmatched_items: List[ReconciliationItem]
+    total_matched: float
+    total_unmatched: float
