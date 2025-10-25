@@ -79,7 +79,7 @@ async def fetch_zoho_data_for_query(user_id: str, query: str) -> str:
         return f"Error fetching Zoho data: {str(e)}"
 
 async def generate_ai_response(user_message: str, user_id: str, chat_history: list = None) -> str:
-    """Generate AI response using OpenAI GPT with Zoho Books context"""
+    """Generate AI response using OpenAI GPT-5 Nano with Zoho Books context"""
     
     # Get integration context
     zoho_context = await get_zoho_context(user_id)
@@ -125,30 +125,24 @@ When the user has Zoho Books connected, you can help them:
 
 Be professional, empathetic, and provide actionable insights. Keep responses concise and focused on collections management."""
 
-    # Build messages array
-    messages = [{"role": "system", "content": system_prompt}]
-    
-    # Add chat history if available (last 5 messages for context)
-    if chat_history:
-        for msg in chat_history[-5:]:
-            role = "user" if msg["sender"] == "user" else "assistant"
-            messages.append({"role": role, "content": msg["message"]})
-    
-    # Add current user message
-    messages.append({"role": "user", "content": user_message})
-    
     try:
-        # Call OpenAI API
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",  # Using GPT-4o-mini which is more cost-effective
-            messages=messages,
-            max_tokens=500,
-            temperature=0.7
-        )
+        # Initialize LlmChat with GPT-5 Nano
+        api_key = os.environ.get('OPENAI_API_KEY')
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=user_id,  # Use user_id as session for now
+            system_message=system_prompt
+        ).with_model("openai", "gpt-5-nano")
         
-        return response.choices[0].message.content
+        # Create user message
+        user_msg = UserMessage(text=user_message)
+        
+        # Send message and get response
+        response = await chat.send_message(user_msg)
+        
+        return response
     except Exception as e:
-        print(f"OpenAI API Error: {str(e)}")
+        print(f"GPT-5 Nano API Error: {str(e)}")
         # Fallback to basic response
         return "I'm here to help you with collections management. Could you please rephrase your question or provide more details?"
 
