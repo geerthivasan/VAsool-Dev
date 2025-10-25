@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { Building2, Landmark, CheckCircle2, Clock } from 'lucide-react';
 import { toast } from '../hooks/use-toast';
-import axios from 'axios';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import ZohoSetupModal from './ZohoSetupModal';
 
 const IntegrationsModal = ({ open, onOpenChange }) => {
   const [activeIntegration, setActiveIntegration] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [zohoSetupOpen, setZohoSetupOpen] = useState(false);
   const [connectedIntegrations, setConnectedIntegrations] = useState([]);
   const [oauthConfigured, setOauthConfigured] = useState(false);
 
