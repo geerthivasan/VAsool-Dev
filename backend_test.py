@@ -355,6 +355,221 @@ class VasoolAPITester:
             self.log_result("Dashboard Analytics", False, f"Failed with status {response.status_code}")
             
         return False
+
+    def test_dashboard_collections(self):
+        """Test dashboard collections endpoint"""
+        if not self.auth_token:
+            self.log_result("Dashboard Collections", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        response = self.make_request("GET", "/dashboard/collections", headers=headers)
+        
+        if response is None:
+            self.log_result("Dashboard Collections", False, "Request failed - connection error")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                required_fields = ["unpaid_invoices", "overdue_invoices", "total_unpaid", "total_overdue"]
+                
+                if all(field in data for field in required_fields):
+                    # Verify data structure
+                    unpaid_count = len(data["unpaid_invoices"])
+                    overdue_count = len(data["overdue_invoices"])
+                    
+                    # Check if invoice items have required fields
+                    valid_structure = True
+                    if unpaid_count > 0:
+                        first_unpaid = data["unpaid_invoices"][0]
+                        invoice_fields = ["id", "invoice_number", "customer_name", "amount", "balance", "due_date", "status"]
+                        if not all(field in first_unpaid for field in invoice_fields):
+                            valid_structure = False
+                    
+                    if valid_structure:
+                        self.log_result("Dashboard Collections", True, "Collections data retrieved successfully", {
+                            "unpaid_count": unpaid_count,
+                            "overdue_count": overdue_count,
+                            "total_unpaid": data["total_unpaid"],
+                            "total_overdue": data["total_overdue"]
+                        })
+                        return True
+                    else:
+                        self.log_result("Dashboard Collections", False, "Invalid invoice item structure")
+                else:
+                    missing_fields = [field for field in required_fields if field not in data]
+                    self.log_result("Dashboard Collections", False, f"Missing required fields: {missing_fields}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Collections", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Collections", False, f"Failed with status {response.status_code}")
+            
+        return False
+
+    def test_dashboard_analytics_trends(self):
+        """Test dashboard analytics trends endpoint"""
+        if not self.auth_token:
+            self.log_result("Dashboard Analytics Trends", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        response = self.make_request("GET", "/dashboard/analytics-trends", headers=headers)
+        
+        if response is None:
+            self.log_result("Dashboard Analytics Trends", False, "Request failed - connection error")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                required_fields = ["monthly_trends", "total_collected", "total_outstanding", "collection_efficiency", "average_collection_time"]
+                
+                if all(field in data for field in required_fields):
+                    # Verify monthly trends structure
+                    trends_count = len(data["monthly_trends"])
+                    valid_trends = True
+                    
+                    if trends_count > 0:
+                        first_trend = data["monthly_trends"][0]
+                        trend_fields = ["month", "collected", "outstanding"]
+                        if not all(field in first_trend for field in trend_fields):
+                            valid_trends = False
+                    
+                    if valid_trends:
+                        self.log_result("Dashboard Analytics Trends", True, "Analytics trends data retrieved successfully", {
+                            "trends_count": trends_count,
+                            "total_collected": data["total_collected"],
+                            "total_outstanding": data["total_outstanding"],
+                            "collection_efficiency": data["collection_efficiency"],
+                            "average_collection_time": data["average_collection_time"]
+                        })
+                        return True
+                    else:
+                        self.log_result("Dashboard Analytics Trends", False, "Invalid monthly trends structure")
+                else:
+                    missing_fields = [field for field in required_fields if field not in data]
+                    self.log_result("Dashboard Analytics Trends", False, f"Missing required fields: {missing_fields}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Analytics Trends", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Analytics Trends", False, f"Failed with status {response.status_code}")
+            
+        return False
+
+    def test_dashboard_reconciliation(self):
+        """Test dashboard reconciliation endpoint"""
+        if not self.auth_token:
+            self.log_result("Dashboard Reconciliation", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        response = self.make_request("GET", "/dashboard/reconciliation", headers=headers)
+        
+        if response is None:
+            self.log_result("Dashboard Reconciliation", False, "Request failed - connection error")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                required_fields = ["matched_items", "unmatched_items", "total_matched", "total_unmatched"]
+                
+                if all(field in data for field in required_fields):
+                    # Verify reconciliation items structure
+                    matched_count = len(data["matched_items"])
+                    unmatched_count = len(data["unmatched_items"])
+                    
+                    valid_structure = True
+                    if matched_count > 0:
+                        first_matched = data["matched_items"][0]
+                        item_fields = ["id", "date", "description", "amount", "status"]
+                        if not all(field in first_matched for field in item_fields):
+                            valid_structure = False
+                    
+                    if valid_structure:
+                        self.log_result("Dashboard Reconciliation", True, "Reconciliation data retrieved successfully", {
+                            "matched_count": matched_count,
+                            "unmatched_count": unmatched_count,
+                            "total_matched": data["total_matched"],
+                            "total_unmatched": data["total_unmatched"]
+                        })
+                        return True
+                    else:
+                        self.log_result("Dashboard Reconciliation", False, "Invalid reconciliation item structure")
+                else:
+                    missing_fields = [field for field in required_fields if field not in data]
+                    self.log_result("Dashboard Reconciliation", False, f"Missing required fields: {missing_fields}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Reconciliation", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Reconciliation", False, f"Failed with status {response.status_code}")
+            
+        return False
+
+    def test_validation_error_handling(self):
+        """Test validation error handling - should return user-friendly string messages"""
+        print("\n=== Testing Validation Error Handling ===")
+        
+        if not self.auth_token:
+            self.log_result("Validation Error Handling", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        # Test with invalid/missing data for user-oauth-setup endpoint
+        invalid_data = {
+            "client_id": "",  # Empty string should trigger validation error
+            "client_secret": ""  # Empty string should trigger validation error
+        }
+        
+        response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", invalid_data, headers)
+        
+        if response is None:
+            self.log_result("Validation Error Handling", False, "Request failed - connection error")
+            return False
+            
+        if response.status_code == 422:  # Validation error expected
+            try:
+                data = response.json()
+                
+                # Check if response has user-friendly error format
+                if "detail" in data and isinstance(data["detail"], str):
+                    # Should be a simple string, not a complex object
+                    error_message = data["detail"]
+                    
+                    # Verify it's not the old Pydantic format with type, loc, msg, etc.
+                    if not any(key in str(data) for key in ["type", "loc", "msg", "input", "url"]):
+                        self.log_result("Validation Error Handling", True, f"User-friendly error message returned: {error_message}", {
+                            "error_message": error_message,
+                            "response_format": "simple_string"
+                        })
+                        return True
+                    else:
+                        self.log_result("Validation Error Handling", False, "Error response still contains complex Pydantic format")
+                else:
+                    self.log_result("Validation Error Handling", False, f"Error response format not user-friendly: {data}")
+            except json.JSONDecodeError:
+                self.log_result("Validation Error Handling", False, "Invalid JSON response")
+        else:
+            self.log_result("Validation Error Handling", False, f"Expected validation error (422), got status {response.status_code}")
+            
+        return False
     
     def run_all_tests(self):
         """Run all API tests"""
