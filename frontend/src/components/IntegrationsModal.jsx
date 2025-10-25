@@ -63,81 +63,9 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
     }
   ];
 
-  const handleZohoConnect = async () => {
-    setLoading(true);
-    
-    try {
-      const token = localStorage.getItem('authToken');
-      
-      // First, try to get OAuth URL to check if credentials are configured
-      try {
-        const testResponse = await axios.get(
-          `${API}/integrations/zoho/auth-url`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // If we get here, credentials are configured
-        // Close modal and redirect to Zoho
-        onOpenChange(false);
-        toast({
-          title: "Redirecting to Zoho...",
-          description: "You'll be redirected to Zoho Books login page",
-        });
-        
-        setTimeout(() => {
-          window.location.href = testResponse.data.auth_url;
-        }, 500);
-        
-      } catch (error) {
-        // OAuth credentials not configured, offer demo mode
-        if (error.response?.status === 400) {
-          const useDemoMode = window.confirm(
-            "OAuth Credentials Not Configured\n\n" +
-            "Zoho OAuth credentials (Client ID & Secret) are not set up yet.\n\n" +
-            "Would you like to use DEMO MODE instead?\n\n" +
-            "✅ Click OK for Demo Mode (works immediately)\n" +
-            "❌ Click Cancel to set up OAuth credentials first\n\n" +
-            "See /app/ZOHO_OAUTH_SETUP.md for setup instructions"
-          );
-          
-          if (useDemoMode) {
-            // Use demo mode
-            const response = await axios.post(
-              `${API}/integrations/zoho/demo-connect`,
-              {},
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            
-            if (response.data.success) {
-              toast({
-                title: "Demo Connection Successful!",
-                description: "Zoho Books connected in demo mode.",
-              });
-              setActiveIntegration(null);
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000);
-            }
-          } else {
-            toast({
-              title: "Setup Required",
-              description: "Please configure Zoho OAuth credentials. See ZOHO_OAUTH_SETUP.md",
-              variant: "destructive",
-            });
-            setLoading(false);
-          }
-        } else {
-          throw error;
-        }
-      }
-    } catch (error) {
-      toast({
-        title: "Connection Failed",
-        description: error.response?.data?.detail || "Failed to initiate Zoho Books connection",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
+  const handleZohoClick = () => {
+    setZohoSetupOpen(true);
+    onOpenChange(false); // Close main integrations modal
   };
 
   return (
