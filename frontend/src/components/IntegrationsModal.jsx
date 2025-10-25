@@ -15,6 +15,23 @@ const IntegrationsModal = ({ open, onOpenChange }) => {
   const [activeIntegration, setActiveIntegration] = useState(null);
   const [loading, setLoading] = useState(false);
   const [connectedIntegrations, setConnectedIntegrations] = useState([]);
+  const [oauthConfigured, setOauthConfigured] = useState(false);
+
+  // Check OAuth configuration status on mount
+  React.useEffect(() => {
+    const checkOAuthConfig = async () => {
+      try {
+        const response = await axios.get(`${API}/integrations/zoho/config-status`);
+        setOauthConfigured(response.data.configured);
+      } catch (error) {
+        console.error('Failed to check OAuth config:', error);
+      }
+    };
+    
+    if (open) {
+      checkOAuthConfig();
+    }
+  }, [open]);
 
   const accountingSystems = [
     {
