@@ -71,5 +71,21 @@ export const dashboardAPI = {
   getAnalytics: async () => {
     const response = await axios.get(`${API}/dashboard/analytics`, createAuthConfig());
     return response.data;
+  },
+  
+  getCollections: async () => {
+    const response = await axios.get(`${API}/dashboard/collections`, createAuthConfig());
+    return response.data;
+  },
+  
+  getAnalyticsTrends: async () => {
+    const response = await axios.get(`${API}/dashboard/analytics-trends`, createAuthConfig());
+    return response.data;
+  },
+  
+  getReconciliation: async () => {
+    const response = await axios.get(`${API}/dashboard/reconciliation`, createAuthConfig());
+    return response.data;
   }
 };
+
