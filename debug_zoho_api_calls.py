@@ -133,7 +133,7 @@ class ZohoAPIDebugger:
         """Check what's actually stored in the integration"""
         print("\n🔍 Checking integration in database...")
         
-        if not self.db or not self.user_id:
+        if self.db is None or not self.user_id:
             print("❌ No database connection or user ID")
             return None
             
