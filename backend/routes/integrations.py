@@ -39,7 +39,7 @@ class IntegrationStatus(BaseModel):
 class UserOAuthSetup(BaseModel):
     client_id: str
     client_secret: str
-    organization_id: str = None
+    organization_id: Optional[str] = None
 
 @router.post("/zoho/user-oauth-setup", response_model=ZohoAuthUrlResponse)
 async def user_oauth_setup(
