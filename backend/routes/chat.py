@@ -3,9 +3,10 @@ from models import ChatMessage, ChatResponse, ChatHistory, MessageItem
 from auth_utils import get_current_user
 from database import init_db
 from datetime import datetime
+from dotenv import load_dotenv
 import uuid
 import os
-from openai import OpenAI
+from emergentintegrations.llm.chat import LlmChat, UserMessage
 from zoho_api_helper import (
     get_user_zoho_credentials, 
     get_invoices, 
@@ -15,11 +16,10 @@ from zoho_api_helper import (
 )
 import json
 
-router = APIRouter(prefix="/api/chat", tags=["Chat"])
+# Load environment variables
+load_dotenv()
 
-# Initialize OpenAI client
-OPENAI_API_KEY = "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"
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 async def get_zoho_context(user_id: str) -> str:
     """Get Zoho Books integration context for the user"""
