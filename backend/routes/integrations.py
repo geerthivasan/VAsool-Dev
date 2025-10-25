@@ -35,6 +35,50 @@ class IntegrationStatus(BaseModel):
     zohobooks_email: str = None
     last_sync: str = None
 
+class UserOAuthSetup(BaseModel):
+    client_id: str
+    client_secret: str
+    organization_id: str = None
+
+@router.post("/zoho/user-oauth-setup", response_model=ZohoAuthUrlResponse)
+async def user_oauth_setup(
+    oauth_data: UserOAuthSetup,
+    current_user: dict = Depends(get_current_user)
+):
+    """Store user's OAuth credentials and generate auth URL"""
+    db = init_db()
+    user_id = current_user["user_id"]
+    
+    # Generate state token for CSRF protection
+    state = secrets.token_urlsafe(32)
+    
+    # Store OAuth credentials and state for this user
+    await db.user_oauth_credentials.insert_one({
+        "user_id": user_id,
+        "client_id": oauth_data.client_id,
+        "client_secret": oauth_data.client_secret,  # Should be encrypted in production
+        "organization_id": oauth_data.organization_id,
+        "state": state,
+        "created_at": datetime.utcnow()
+    })
+    
+    # Build redirect URI for this user
+    redirect_uri = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/zoho/callback"
+    
+    # Build OAuth URL using user's credentials
+    auth_url = (
+        f"{ZOHO_AUTH_URL}"
+        f"?scope={ZOHO_SCOPE}"
+        f"&client_id={oauth_data.client_id}"
+        f"&response_type=code"
+        f"&redirect_uri={redirect_uri}"
+        f"&state={state}"
+        f"&access_type=offline"
+        f"&prompt=consent"
+    )
+    
+    return ZohoAuthUrlResponse(auth_url=auth_url, state=state)
+
 @router.post("/zoho/demo-connect", response_model=IntegrationResponse)
 async def demo_connect_zoho(current_user: dict = Depends(get_current_user)):
     """Demo mode connection for testing without real OAuth credentials"""
