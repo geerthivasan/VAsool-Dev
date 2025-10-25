@@ -738,6 +738,8 @@ class VasoolAPITester:
             critical_failures.append("New dashboard endpoints not working properly")
         if not validation_success:
             critical_failures.append("Validation error handling not user-friendly")
+        if not zoho_oauth_success:
+            critical_failures.append("Zoho OAuth setup endpoint not working properly")
             
         if critical_failures:
             print("\n🚨 CRITICAL ISSUES:")
