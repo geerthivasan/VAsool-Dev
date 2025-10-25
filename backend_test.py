@@ -568,6 +568,141 @@ class VasoolAPITester:
             
         return False
 
+    def test_zoho_oauth_redirect_uri_verification(self):
+        """Test Zoho OAuth redirect URI format with exact user credentials"""
+        print("\n=== Testing Zoho OAuth Redirect URI Verification ===")
+        
+        if not self.auth_token:
+            self.log_result("Zoho OAuth Redirect URI Verification", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        # Exact test credentials provided by user
+        test_credentials = {
+            "client_id": "1000.OH8JNIK1UP8VEGHLM6QN4BC6CM801K",
+            "client_secret": "c7ff157ccf95db7751ed218370973cf86db0477597"
+        }
+        
+        # Expected redirect URI (user's registered URI in Zoho)
+        expected_redirect_uri = "https://fintech-collector.preview.emergentagent.com/zoho/callback"
+        
+        print(f"Expected redirect URI: {expected_redirect_uri}")
+        
+        response = self.make_request("POST", "/integrations/zoho/user-oauth-setup", test_credentials, headers)
+        
+        if response is None:
+            self.log_result("Zoho OAuth Redirect URI Verification", False, "Request failed - connection error")
+            return False
+            
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                auth_url = data.get("auth_url")
+                
+                if not auth_url:
+                    self.log_result("Zoho OAuth Redirect URI Verification", False, "No auth_url in response")
+                    return False
+                
+                print(f"\nFull auth_url: {auth_url}")
+                
+                # Parse the auth_url to extract redirect_uri parameter
+                from urllib.parse import urlparse, parse_qs
+                
+                parsed_url = urlparse(auth_url)
+                query_params = parse_qs(parsed_url.query)
+                
+                if 'redirect_uri' not in query_params:
+                    self.log_result("Zoho OAuth Redirect URI Verification", False, "No redirect_uri parameter found in auth_url")
+                    return False
+                
+                # Get the redirect_uri value (parse_qs returns lists)
+                redirect_uri_raw = query_params['redirect_uri'][0]
+                
+                print(f"\nRaw redirect_uri (URL encoded): {redirect_uri_raw}")
+                
+                # URL decode the redirect_uri
+                from urllib.parse import unquote
+                redirect_uri_decoded = unquote(redirect_uri_raw)
+                
+                print(f"Decoded redirect_uri: {redirect_uri_decoded}")
+                
+                # Character-by-character comparison
+                print(f"\nCharacter-by-character comparison:")
+                print(f"Expected: {expected_redirect_uri}")
+                print(f"Actual  : {redirect_uri_decoded}")
+                
+                # Check for exact match
+                if redirect_uri_decoded == expected_redirect_uri:
+                    print("✅ EXACT MATCH - redirect_uri matches expected value perfectly")
+                    
+                    # Additional checks for common issues
+                    checks = {
+                        "No trailing slash": not redirect_uri_decoded.endswith('/'),
+                        "Correct protocol": redirect_uri_decoded.startswith('https://'),
+                        "Correct domain": 'fintech-collector.preview.emergentagent.com' in redirect_uri_decoded,
+                        "Correct path": redirect_uri_decoded.endswith('/zoho/callback'),
+                        "No extra query params": '?' not in redirect_uri_decoded
+                    }
+                    
+                    all_checks_passed = all(checks.values())
+                    
+                    print(f"\nAdditional validation checks:")
+                    for check, passed in checks.items():
+                        status = "✅" if passed else "❌"
+                        print(f"  {status} {check}")
+                    
+                    self.log_result("Zoho OAuth Redirect URI Verification", True, 
+                                  f"Redirect URI matches exactly: {redirect_uri_decoded}", {
+                        "expected_uri": expected_redirect_uri,
+                        "actual_uri": redirect_uri_decoded,
+                        "raw_encoded_uri": redirect_uri_raw,
+                        "exact_match": True,
+                        "validation_checks": checks,
+                        "all_checks_passed": all_checks_passed
+                    })
+                    return True
+                else:
+                    # Find differences
+                    differences = []
+                    min_len = min(len(expected_redirect_uri), len(redirect_uri_decoded))
+                    
+                    for i in range(min_len):
+                        if expected_redirect_uri[i] != redirect_uri_decoded[i]:
+                            differences.append(f"Position {i}: expected '{expected_redirect_uri[i]}', got '{redirect_uri_decoded[i]}'")
+                    
+                    if len(expected_redirect_uri) != len(redirect_uri_decoded):
+                        differences.append(f"Length mismatch: expected {len(expected_redirect_uri)}, got {len(redirect_uri_decoded)}")
+                    
+                    print("❌ MISMATCH DETECTED")
+                    print(f"Differences found:")
+                    for diff in differences:
+                        print(f"  - {diff}")
+                    
+                    self.log_result("Zoho OAuth Redirect URI Verification", False, 
+                                  f"Redirect URI mismatch. Expected: {expected_redirect_uri}, Got: {redirect_uri_decoded}", {
+                        "expected_uri": expected_redirect_uri,
+                        "actual_uri": redirect_uri_decoded,
+                        "raw_encoded_uri": redirect_uri_raw,
+                        "differences": differences
+                    })
+                    return False
+                    
+            except Exception as e:
+                self.log_result("Zoho OAuth Redirect URI Verification", False, f"Error parsing auth_url: {str(e)}")
+                return False
+        else:
+            try:
+                error_data = response.json()
+                self.log_result("Zoho OAuth Redirect URI Verification", False, 
+                              f"Failed with status {response.status_code}: {error_data.get('detail', 'Unknown error')}")
+            except json.JSONDecodeError:
+                self.log_result("Zoho OAuth Redirect URI Verification", False, f"Failed with status {response.status_code}")
+            return False
+
     def test_zoho_oauth_setup(self):
         """Test Zoho OAuth setup endpoint with user-provided credentials"""
         print("\n=== Testing Zoho OAuth Setup ===")
