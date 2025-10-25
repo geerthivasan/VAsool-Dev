@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from auth_utils import get_current_user
 from database import init_db
 from datetime import datetime
