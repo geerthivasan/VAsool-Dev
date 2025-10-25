@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/integrations", tags=["Integrations"])
 # Zoho OAuth Configuration
 ZOHO_CLIENT_ID = os.environ.get('ZOHO_CLIENT_ID', '1000.YOUR_CLIENT_ID')
 ZOHO_CLIENT_SECRET = os.environ.get('ZOHO_CLIENT_SECRET', 'your_client_secret')
-ZOHO_REDIRECT_URI = os.environ.get('ZOHO_REDIRECT_URI', f'{os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:3000")}/zoho/callback')
+ZOHO_REDIRECT_URI = os.environ.get('ZOHO_REDIRECT_URI', f'{os.environ.get("FRONTEND_URL", "http://localhost:3000")}/zoho/callback')
 ZOHO_AUTH_URL = "https://accounts.zoho.com/oauth/v2/auth"
 ZOHO_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
 ZOHO_SCOPE = "ZohoBooks.fullaccess.all"
