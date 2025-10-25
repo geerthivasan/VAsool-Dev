@@ -1,9 +1,15 @@
 from fastapi import APIRouter, Depends
-from models import DashboardAnalytics, ActivityItem
+from models import (
+    DashboardAnalytics, ActivityItem, CollectionsData, InvoiceItem,
+    AnalyticsData, MonthlyMetric, ReconciliationData, ReconciliationItem
+)
 from auth_utils import get_current_user
 from datetime import datetime, timedelta
 import random
-from zoho_api_helper import get_dashboard_summary, get_user_zoho_credentials
+from zoho_api_helper import (
+    get_dashboard_summary, get_user_zoho_credentials,
+    get_invoices, get_payments
+)
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
