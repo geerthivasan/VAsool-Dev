@@ -22,6 +22,27 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI(title="Vasool API", version="1.0.0")
 
+# Custom exception handler for validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Convert Pydantic validation errors to user-friendly messages"""
+    errors = exc.errors()
+    
+    # Extract the first error message for simplicity
+    if errors:
+        first_error = errors[0]
+        field = " -> ".join(str(loc) for loc in first_error['loc'][1:])  # Skip 'body'
+        msg = first_error['msg']
+        
+        error_message = f"Invalid {field}: {msg}" if field else f"Validation error: {msg}"
+    else:
+        error_message = "Invalid request data"
+    
+    return JSONResponse(
+        status_code=422,
+        content={"detail": error_message}
+    )
+
 # Create a router with the /api prefix for basic routes
 api_router = APIRouter(prefix="/api")
 
