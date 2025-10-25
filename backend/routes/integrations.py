@@ -63,8 +63,9 @@ async def user_oauth_setup(
         "created_at": datetime.utcnow()
     })
     
-    # Build redirect URI for this user
-    redirect_uri = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/zoho/callback"
+    # Build redirect URI for this user (must point to frontend)
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+    redirect_uri = f"{frontend_url}/zoho/callback"
     
     # Build OAuth URL using user's credentials
     auth_url = (
