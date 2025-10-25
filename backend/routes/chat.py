@@ -105,8 +105,11 @@ async def generate_ai_response(user_message: str, user_id: str, chat_history: li
         dummy_data_instruction = "IMPORTANT: The user does NOT have accounting software connected yet. When providing ANY specific numbers, amounts, statistics, or data-based insights, you MUST start your entire response with '[DUMMY DATA]' at the very beginning. This tag is mandatory for all responses involving data until they connect their accounting system."
     
     real_data_section = ""
-    if is_connected and zoho_data_context:
+    if is_production_mode and zoho_data_context:
         real_data_section = f"REAL DATA FROM ZOHO BOOKS:\n{zoho_data_context}\n\nUse this ACTUAL data to answer the user's question accurately. Reference specific invoice numbers, customer names, and amounts from the data above."
+    elif is_connected and not is_production_mode:
+        # Demo mode - user has connected Zoho but in demo mode
+        real_data_section = f"DEMO MODE: User has connected Zoho Books in demo mode. Provide realistic examples and insights about collections management without using the [DUMMY DATA] tag. Use realistic invoice numbers, amounts, and scenarios that would be typical for a collections platform."
     
     # Build system prompt with context
     system_prompt = f"""You are an AI Collections Assistant for Vasool, a credit collections management platform. 
