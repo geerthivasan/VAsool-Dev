@@ -33,8 +33,8 @@ class IntegrationResponse(BaseModel):
 
 class IntegrationStatus(BaseModel):
     zohobooks_connected: bool
-    zohobooks_email: str = None
-    last_sync: str = None
+    zohobooks_email: Optional[str] = None
+    last_sync: Optional[str] = None
 
 class UserOAuthSetup(BaseModel):
     client_id: str
