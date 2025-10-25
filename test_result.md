@@ -144,6 +144,18 @@ backend:
         agent: "testing"
         comment: "Fixed ObjectId conversion issue. Added proper string to ObjectId conversion for MongoDB query. Endpoint now working correctly."
 
+  - task: "Fix Frontend Error - FastAPI Validation Error Handling"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added custom exception handlers in FastAPI server to convert Pydantic RequestValidationError objects into user-friendly string messages. This prevents React from trying to render complex error objects. Also added general exception handler for uncaught errors."
+
   - task: "Demo Scheduling API"
     implemented: true
     working: true
@@ -203,6 +215,18 @@ backend:
       - working: true
         agent: "testing"
         comment: "GET /api/dashboard/analytics tested successfully. Returns comprehensive analytics data including total_outstanding, recovery_rate, active_accounts, and recent_activity."
+  
+  - task: "Zoho Books Integration - Fetch Dashboard Data"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/zoho_api_helper.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to implement Zoho Books API integration to fetch real data for dashboard tabs (Overview, Collections, Reconciliation, Analytics). This will replace dummy data currently shown."
 
 frontend:
   # Frontend testing not performed by testing agent as per instructions
