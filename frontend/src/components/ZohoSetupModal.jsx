@@ -14,6 +14,7 @@ const API = `${BACKEND_URL}/api`;
 const ZohoSetupModal = ({ open, onOpenChange, onSuccess }) => {
   const [step, setStep] = useState(1); // 1: Instructions, 2: Input Form
   const [loading, setLoading] = useState(false);
+  const [authUrl, setAuthUrl] = useState(null);
   const [credentials, setCredentials] = useState({
     clientId: '',
     clientSecret: '',
