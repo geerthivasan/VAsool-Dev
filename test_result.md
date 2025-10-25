@@ -284,6 +284,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "POST /api/integrations/zoho/user-oauth-setup tested successfully with user-provided credentials (client_id: 1000.OH8JNIK1UP8VEGHLM6QN4BC6CM801K, client_secret: c7ff157ccf95db7751ed218370973cf86db0477597). All three organization_id scenarios tested: empty string, not included, and null value. All return valid auth_url containing Zoho OAuth URL and proper state token for CSRF protection. No validation errors occur when organization_id is optional."
+      - working: true
+        agent: "testing"
+        comment: "REDIRECT URI VERIFICATION COMPLETED: Tested POST /api/integrations/zoho/user-oauth-setup with user-provided credentials. Full auth_url generated: https://accounts.zoho.com/oauth/v2/auth?scope=ZohoBooks.fullaccess.all&client_id=1000.OH8JNIK1UP8VEGHLM6QN4BC6CM801K&response_type=code&redirect_uri=https://fintech-collector.preview.emergentagent.com/zoho/callback&state=[43-char-token]&access_type=offline&prompt=consent. REDIRECT URI CONFIRMED: https://fintech-collector.preview.emergentagent.com/zoho/callback (matches expected value exactly). OAuth parameters properly formatted with valid state token for CSRF protection."
 
 frontend:
   # Frontend testing not performed by testing agent as per instructions
