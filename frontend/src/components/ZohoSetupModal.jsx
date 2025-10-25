@@ -62,9 +62,15 @@ const ZohoSetupModal = ({ open, onOpenChange, onSuccess }) => {
         }, 1000);
       }
     } catch (error) {
+      const errorMessage = error.response?.data?.detail 
+        ? (typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : JSON.stringify(error.response.data.detail))
+        : error.message || "Failed to setup Zoho connection";
+        
       toast({
         title: "Connection Failed",
-        description: error.response?.data?.detail || "Failed to setup Zoho connection",
+        description: errorMessage,
         variant: "destructive",
       });
       setLoading(false);
