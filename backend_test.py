@@ -1652,9 +1652,20 @@ class VasoolAPITester:
 if __name__ == "__main__":
     tester = VasoolAPITester()
     
-    # Run specific Zoho integration tests as requested in review
-    print("Running Zoho Books Integration Tests as requested in review...")
-    success = tester.run_zoho_integration_tests()
+    # Check command line arguments
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "zoho-integration":
+            success = tester.run_zoho_integration_tests()
+        elif sys.argv[1] == "review-request":
+            success = tester.run_review_request_tests()
+        elif sys.argv[1] == "invoice-investigation":
+            success = tester.run_zoho_invoice_investigation()
+        else:
+            print("Usage: python backend_test.py [zoho-integration|review-request|invoice-investigation]")
+            sys.exit(1)
+    else:
+        # Default: Run invoice investigation as requested
+        print("Running Zoho Books Invoice Investigation as requested...")
+        success = tester.run_zoho_invoice_investigation()
     
-    # Exit with appropriate code
     sys.exit(0 if success else 1)
