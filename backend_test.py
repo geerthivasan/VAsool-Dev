@@ -1340,6 +1340,238 @@ class VasoolAPITester:
         
         return both_issues_resolved
 
+    def test_zoho_invoice_investigation(self):
+        """Comprehensive test to check if there are any invoices in the user's Zoho Books account"""
+        print("\n=== ZOHO BOOKS INVOICE INVESTIGATION ===")
+        print("Objective: Verify if the Zoho Books account has any invoices that we can retrieve")
+        
+        if not self.auth_token:
+            self.log_result("Zoho Invoice Investigation", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        # Step 1: Find the user with active Zoho Books integration
+        print("\n📋 Step 1: Checking Zoho Books integration status...")
+        response = self.make_request("GET", "/integrations/status", headers=headers)
+        
+        if response is None or response.status_code != 200:
+            self.log_result("Zoho Invoice Investigation", False, "Failed to get integration status")
+            return False
+            
+        try:
+            status_data = response.json()
+            zoho_connected = status_data.get("zohobooks_connected", False)
+            zoho_email = status_data.get("zohobooks_email")
+            last_sync = status_data.get("last_sync")
+            
+            print(f"   ✅ Integration Status: {'CONNECTED' if zoho_connected else 'NOT CONNECTED'}")
+            if zoho_connected:
+                print(f"   📧 Connected Email: {zoho_email}")
+                print(f"   🔄 Last Sync: {last_sync}")
+            else:
+                print("   ⚠️  No active Zoho Books integration found")
+                self.log_result("Zoho Invoice Investigation", True, 
+                              "No Zoho Books integration - cannot retrieve invoices", {
+                    "zoho_connected": False,
+                    "recommendation": "User needs to connect Zoho Books first"
+                })
+                return True
+                
+        except json.JSONDecodeError:
+            self.log_result("Zoho Invoice Investigation", False, "Invalid JSON response from integration status")
+            return False
+        
+        # Step 2: Try to fetch invoices using GET /api/dashboard/collections endpoint
+        print("\n📋 Step 2: Fetching invoices via dashboard collections endpoint...")
+        response = self.make_request("GET", "/dashboard/collections", headers=headers)
+        
+        collections_data = None
+        if response and response.status_code == 200:
+            try:
+                collections_data = response.json()
+                unpaid_invoices = collections_data.get("unpaid_invoices", [])
+                overdue_invoices = collections_data.get("overdue_invoices", [])
+                total_unpaid = collections_data.get("total_unpaid", 0)
+                total_overdue = collections_data.get("total_overdue", 0)
+                
+                print(f"   📊 Collections Data Retrieved:")
+                print(f"      • Unpaid Invoices: {len(unpaid_invoices)} (Total: ₹{total_unpaid:,.2f})")
+                print(f"      • Overdue Invoices: {len(overdue_invoices)} (Total: ₹{total_overdue:,.2f})")
+                
+                # Check if this is real data or mock data
+                is_mock_data = (total_unpaid == 125000 and total_overdue == 210000)
+                
+                if is_mock_data:
+                    print("   ⚠️  Data appears to be MOCK DATA (not real Zoho invoices)")
+                else:
+                    print("   ✅ Data appears to be REAL ZOHO DATA")
+                    
+                    # Display invoice details if found
+                    if unpaid_invoices or overdue_invoices:
+                        print(f"\n   📋 Invoice Details:")
+                        
+                        for i, invoice in enumerate(unpaid_invoices[:3]):  # Show first 3
+                            print(f"      Unpaid #{i+1}: {invoice.get('invoice_number', 'N/A')} - "
+                                  f"{invoice.get('customer_name', 'Unknown')} - "
+                                  f"₹{invoice.get('balance', 0):,.2f}")
+                        
+                        for i, invoice in enumerate(overdue_invoices[:3]):  # Show first 3
+                            print(f"      Overdue #{i+1}: {invoice.get('invoice_number', 'N/A')} - "
+                                  f"{invoice.get('customer_name', 'Unknown')} - "
+                                  f"₹{invoice.get('balance', 0):,.2f} "
+                                  f"({invoice.get('days_overdue', 0)} days overdue)")
+                    else:
+                        print("   📭 No invoices found in the account")
+                        
+            except json.JSONDecodeError:
+                print("   ❌ Failed to parse collections response")
+                collections_data = None
+        else:
+            print(f"   ❌ Collections endpoint failed with status {response.status_code if response else 'No response'}")
+        
+        # Step 3: Check analytics endpoint for additional invoice data
+        print("\n📋 Step 3: Checking analytics endpoint for invoice metrics...")
+        response = self.make_request("GET", "/dashboard/analytics", headers=headers)
+        
+        analytics_data = None
+        if response and response.status_code == 200:
+            try:
+                analytics_data = response.json()
+                total_outstanding = analytics_data.get("total_outstanding", 0)
+                active_accounts = analytics_data.get("active_accounts", 0)
+                recovery_rate = analytics_data.get("recovery_rate", 0)
+                
+                print(f"   📊 Analytics Data:")
+                print(f"      • Total Outstanding: ₹{total_outstanding:,.2f}")
+                print(f"      • Active Accounts: {active_accounts}")
+                print(f"      • Recovery Rate: {recovery_rate}%")
+                
+                # Check if this is mock data
+                is_mock_analytics = (total_outstanding == 4520000)
+                
+                if is_mock_analytics:
+                    print("   ⚠️  Analytics data appears to be MOCK DATA")
+                else:
+                    print("   ✅ Analytics data appears to be REAL ZOHO DATA")
+                    
+            except json.JSONDecodeError:
+                print("   ❌ Failed to parse analytics response")
+                analytics_data = None
+        else:
+            print(f"   ❌ Analytics endpoint failed with status {response.status_code if response else 'No response'}")
+        
+        # Step 4: Test chat queries about invoices
+        print("\n📋 Step 4: Testing chat queries about invoices...")
+        
+        test_queries = [
+            "Show me my latest invoices",
+            "How many invoices do I have?",
+            "What's my total outstanding amount?"
+        ]
+        
+        chat_responses = []
+        for query in test_queries:
+            chat_data = {"message": query}
+            response = self.make_request("POST", "/chat/message", chat_data, headers)
+            
+            if response and response.status_code == 200:
+                try:
+                    data = response.json()
+                    ai_response = data.get("response", "")
+                    has_dummy_tag = "[DUMMY DATA]" in ai_response
+                    
+                    print(f"   💬 Query: '{query}'")
+                    print(f"      Response: {ai_response[:100]}...")
+                    print(f"      Has [DUMMY DATA] tag: {has_dummy_tag}")
+                    
+                    chat_responses.append({
+                        "query": query,
+                        "response": ai_response,
+                        "has_dummy_tag": has_dummy_tag
+                    })
+                    
+                except json.JSONDecodeError:
+                    print(f"   ❌ Failed to parse chat response for: {query}")
+            else:
+                print(f"   ❌ Chat query failed for: {query}")
+        
+        # Step 5: Final Analysis and Summary
+        print("\n📋 Step 5: Final Analysis...")
+        
+        # Determine if we have real invoice data
+        has_real_invoices = False
+        invoice_count = 0
+        total_amount = 0
+        
+        if collections_data:
+            unpaid_count = len(collections_data.get("unpaid_invoices", []))
+            overdue_count = len(collections_data.get("overdue_invoices", []))
+            invoice_count = unpaid_count + overdue_count
+            
+            total_unpaid = collections_data.get("total_unpaid", 0)
+            total_overdue = collections_data.get("total_overdue", 0)
+            total_amount = total_unpaid + total_overdue
+            
+            # Check if it's not mock data
+            is_not_mock = not (total_unpaid == 125000 and total_overdue == 210000)
+            has_real_invoices = is_not_mock
+        
+        # Generate final report
+        if zoho_connected:
+            if has_real_invoices and invoice_count > 0:
+                result_message = f"✅ INVOICES FOUND: {invoice_count} invoices with total amount ₹{total_amount:,.2f}"
+                success = True
+            elif has_real_invoices and invoice_count == 0:
+                result_message = "📭 NO INVOICES FOUND: Zoho Books account is connected but empty (no invoices)"
+                success = True
+            else:
+                result_message = "⚠️  MOCK DATA DETECTED: Connected to Zoho but receiving mock data instead of real invoices"
+                success = False
+        else:
+            result_message = "❌ NO ZOHO CONNECTION: User needs to connect Zoho Books first"
+            success = True  # This is expected behavior
+        
+        print(f"\n🎯 FINAL RESULT: {result_message}")
+        
+        # Log comprehensive result
+        self.log_result("Zoho Invoice Investigation", success, result_message, {
+            "zoho_connected": zoho_connected,
+            "zoho_email": zoho_email,
+            "invoice_count": invoice_count,
+            "total_amount": total_amount,
+            "has_real_data": has_real_invoices,
+            "collections_endpoint_working": collections_data is not None,
+            "analytics_endpoint_working": analytics_data is not None,
+            "chat_responses": len(chat_responses),
+            "recommendation": "Connect Zoho Books" if not zoho_connected else 
+                           "Account connected but empty" if invoice_count == 0 else
+                           "Invoices found successfully"
+        })
+        
+        return success
+
+    def run_zoho_invoice_investigation(self):
+        """Run the specific Zoho invoice investigation as requested"""
+        print("🔍 ZOHO BOOKS INVOICE INVESTIGATION")
+        print("=" * 80)
+        
+        # Authentication first
+        signup_success = self.test_auth_signup()
+        login_success = self.test_auth_login()
+        
+        if not login_success:
+            print("❌ Cannot proceed - authentication failed")
+            return False
+        
+        # Run the investigation
+        investigation_success = self.test_zoho_invoice_investigation()
+        
+        return investigation_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Vasool Backend API Tests")
