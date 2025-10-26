@@ -50,33 +50,68 @@ async def fetch_zoho_data_for_query(user_id: str, query: str) -> str:
     context = []
     
     try:
-        # Fetch relevant data based on query
-        if any(word in query_lower for word in ['invoice', 'overdue', 'outstanding', 'unpaid']):
-            invoices = await get_invoices(user_id, status="overdue")
-            if invoices:
-                top_overdue = sorted(invoices, key=lambda x: float(x.get('balance', 0)), reverse=True)[:5]
-                context.append("Top 5 Overdue Invoices:")
-                for inv in top_overdue:
+        # Fetch relevant data based on query keywords
+        # Check for invoice-related queries
+        if any(word in query_lower for word in ['invoice', 'bill', 'latest', 'recent', 'all', 'show', 'list']):
+            # Fetch ALL invoices (not just overdue) for general queries
+            all_invoices = await get_invoices(user_id)  # Get all invoices
+            unpaid_invoices = await get_invoices(user_id, status="unpaid")
+            overdue_invoices = await get_invoices(user_id, status="overdue")
+            
+            if all_invoices:
+                # Sort by date to get latest invoices
+                sorted_invoices = sorted(all_invoices, key=lambda x: x.get('date', ''), reverse=True)[:10]
+                context.append(f"Total Invoices: {len(all_invoices)}")
+                context.append(f"Unpaid: {len(unpaid_invoices)}, Overdue: {len(overdue_invoices)}")
+                context.append("\nRecent Invoices:")
+                for inv in sorted_invoices[:5]:
+                    status_text = inv.get('status', 'N/A')
+                    context.append(f"- Invoice #{inv.get('invoice_number')}: {inv.get('customer_name')} - ₹{inv.get('total')} - Status: {status_text} (Date: {inv.get('date')})")
+            else:
+                context.append("No invoices found in your Zoho Books account.")
+            
+            # Add overdue details if query mentions overdue
+            if 'overdue' in query_lower and overdue_invoices:
+                context.append("\nOverdue Invoices:")
+                for inv in overdue_invoices[:5]:
                     context.append(f"- Invoice #{inv.get('invoice_number')}: {inv.get('customer_name')} - ₹{inv.get('balance')} (Due: {inv.get('due_date')})")
         
-        if any(word in query_lower for word in ['customer', 'client', 'account']):
+        # Check for customer-related queries
+        if any(word in query_lower for word in ['customer', 'client', 'account', 'contact']):
             customers = await get_customers(user_id)
             if customers:
                 context.append(f"\nTotal Customers: {len(customers)}")
-                context.append("Recent Customers:")
-                for cust in customers[:3]:
+                context.append("Top Customers by Outstanding:")
+                # Sort by outstanding amount
+                sorted_customers = sorted(customers, key=lambda x: float(x.get('outstanding_receivable_amount', 0)), reverse=True)[:5]
+                for cust in sorted_customers:
                     context.append(f"- {cust.get('contact_name')}: Outstanding ₹{cust.get('outstanding_receivable_amount', 0)}")
+            else:
+                context.append("No customers found in your Zoho Books account.")
         
-        if any(word in query_lower for word in ['receivable', 'collection', 'summary', 'total']):
+        # Check for payment-related queries
+        if any(word in query_lower for word in ['payment', 'paid', 'received', 'collection']):
+            payments = await get_payments(user_id)
+            if payments:
+                context.append(f"\nTotal Payments: {len(payments)}")
+                context.append("Recent Payments:")
+                for payment in payments[:5]:
+                    context.append(f"- Payment #{payment.get('payment_number')}: {payment.get('customer_name')} - ₹{payment.get('amount')} (Date: {payment.get('date')})")
+            else:
+                context.append("No payments found.")
+        
+        # Check for summary/total queries
+        if any(word in query_lower for word in ['receivable', 'summary', 'total', 'outstanding']):
             receivables = await get_outstanding_receivables(user_id)
             if receivables:
                 context.append(f"\nOutstanding Receivables Summary:")
                 context.append(f"- Total Outstanding: ₹{receivables.get('total_outstanding', 0)}")
         
-        return "\n".join(context) if context else "Fetched data but no specific matches found."
+        return "\n".join(context) if context else "I've checked your Zoho Books account. Please ask specific questions about invoices, customers, payments, or outstanding amounts."
         
     except Exception as e:
-        return f"Error fetching Zoho data: {str(e)}"
+        print(f"Error fetching Zoho data: {str(e)}")
+        return f"Error fetching data from Zoho Books: {str(e)}"
 
 async def generate_ai_response(user_message: str, user_id: str, chat_history: list = None) -> str:
     """Generate AI response using OpenAI GPT-5 Nano with Zoho Books context"""
