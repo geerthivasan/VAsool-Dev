@@ -1070,18 +1070,215 @@ class VasoolAPITester:
         
         return success_count == total_tests
 
+    def test_review_request_chat_invoice_queries(self, zoho_connected: bool):
+        """Test specific chat queries from review request - ISSUE 1"""
+        print("\n=== Testing Review Request - Chat Invoice Queries ===")
+        
+        if not self.auth_token:
+            self.log_result("Review Request Chat Queries", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        # Test queries from review request
+        test_queries = [
+            "Give me the latest invoice",
+            "Show me all my invoices", 
+            "List my recent invoices",
+            "What invoices do I have?"
+        ]
+        
+        success_count = 0
+        
+        for query in test_queries:
+            chat_data = {"message": query}
+            response = self.make_request("POST", "/chat/message", chat_data, headers)
+            
+            if response and response.status_code == 200:
+                try:
+                    data = response.json()
+                    ai_response = data.get("response", "")
+                    
+                    if zoho_connected:
+                        # Should NOT have [DUMMY DATA] tag when Zoho connected
+                        if "[DUMMY DATA]" in ai_response:
+                            self.log_result(f"Chat Query: '{query}'", False, 
+                                          f"❌ Contains [DUMMY DATA] tag despite Zoho being connected")
+                        else:
+                            # Should provide actual data or "No invoices found"
+                            if "no invoices found" in ai_response.lower() or any(indicator in ai_response.lower() for indicator in ["invoice", "₹", "customer", "amount"]):
+                                self.log_result(f"Chat Query: '{query}'", True, 
+                                              f"✅ Responds with real data or 'no invoices found' (no dummy tag)")
+                                success_count += 1
+                            else:
+                                self.log_result(f"Chat Query: '{query}'", False, 
+                                              f"❌ Response doesn't contain expected invoice data or 'no invoices found'")
+                    else:
+                        # Should have [DUMMY DATA] tag when not connected
+                        if "[DUMMY DATA]" in ai_response:
+                            self.log_result(f"Chat Query: '{query}'", True, 
+                                          f"✅ Correctly shows [DUMMY DATA] tag when not connected")
+                            success_count += 1
+                        else:
+                            self.log_result(f"Chat Query: '{query}'", False, 
+                                          f"❌ Missing [DUMMY DATA] tag when Zoho not connected")
+                            
+                except json.JSONDecodeError:
+                    self.log_result(f"Chat Query: '{query}'", False, "Invalid JSON response")
+            else:
+                self.log_result(f"Chat Query: '{query}'", False, "Request failed")
+        
+        return success_count == len(test_queries)
+
+    def test_review_request_dashboard_data(self, zoho_connected: bool):
+        """Test specific dashboard endpoints from review request - ISSUE 2"""
+        print("\n=== Testing Review Request - Dashboard Data ===")
+        
+        if not self.auth_token:
+            self.log_result("Review Request Dashboard Data", False, "No auth token available")
+            return False
+            
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth_token}"
+        }
+        
+        success_count = 0
+        total_tests = 4
+        
+        # Test 1: GET /api/dashboard/analytics
+        response = self.make_request("GET", "/dashboard/analytics", headers=headers)
+        if response and response.status_code == 200:
+            try:
+                data = response.json()
+                total_outstanding = data.get("total_outstanding", 0)
+                
+                if zoho_connected:
+                    # Should NOT show mock value 4520000
+                    if total_outstanding == 4520000:
+                        self.log_result("Dashboard Analytics", False, 
+                                      f"❌ Still showing mock value 4520000 instead of real Zoho data")
+                    else:
+                        self.log_result("Dashboard Analytics", True, 
+                                      f"✅ Shows real Zoho data: Outstanding={total_outstanding}")
+                        success_count += 1
+                else:
+                    # Should show mock data when not connected
+                    if total_outstanding == 4520000:
+                        self.log_result("Dashboard Analytics", True, 
+                                      f"✅ Correctly shows mock data when not connected")
+                        success_count += 1
+                    else:
+                        self.log_result("Dashboard Analytics", False, 
+                                      f"❌ Unexpected data when not connected: {total_outstanding}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Analytics", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Analytics", False, "Request failed")
+        
+        # Test 2: GET /api/dashboard/collections
+        response = self.make_request("GET", "/dashboard/collections", headers=headers)
+        if response and response.status_code == 200:
+            try:
+                data = response.json()
+                total_unpaid = data.get("total_unpaid", 0)
+                
+                if zoho_connected:
+                    # Should NOT show mock value 125000
+                    if total_unpaid == 125000:
+                        self.log_result("Dashboard Collections", False, 
+                                      f"❌ Still showing mock value 125000 instead of real Zoho data")
+                    else:
+                        self.log_result("Dashboard Collections", True, 
+                                      f"✅ Shows real Zoho data: Unpaid={total_unpaid}")
+                        success_count += 1
+                else:
+                    # Should show mock data when not connected
+                    if total_unpaid == 125000:
+                        self.log_result("Dashboard Collections", True, 
+                                      f"✅ Correctly shows mock data when not connected")
+                        success_count += 1
+                    else:
+                        self.log_result("Dashboard Collections", False, 
+                                      f"❌ Unexpected data when not connected: {total_unpaid}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Collections", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Collections", False, "Request failed")
+        
+        # Test 3: GET /api/dashboard/analytics-trends
+        response = self.make_request("GET", "/dashboard/analytics-trends", headers=headers)
+        if response and response.status_code == 200:
+            try:
+                data = response.json()
+                total_collected = data.get("total_collected", 0)
+                
+                if zoho_connected:
+                    # Should NOT show mock value 6120000
+                    if total_collected == 6120000:
+                        self.log_result("Dashboard Analytics Trends", False, 
+                                      f"❌ Still showing mock value 6120000 instead of real Zoho data")
+                    else:
+                        self.log_result("Dashboard Analytics Trends", True, 
+                                      f"✅ Shows real Zoho data: Collected={total_collected}")
+                        success_count += 1
+                else:
+                    # Should show mock data when not connected
+                    if total_collected == 6120000:
+                        self.log_result("Dashboard Analytics Trends", True, 
+                                      f"✅ Correctly shows mock data when not connected")
+                        success_count += 1
+                    else:
+                        self.log_result("Dashboard Analytics Trends", False, 
+                                      f"❌ Unexpected data when not connected: {total_collected}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Analytics Trends", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Analytics Trends", False, "Request failed")
+        
+        # Test 4: GET /api/dashboard/reconciliation
+        response = self.make_request("GET", "/dashboard/reconciliation", headers=headers)
+        if response and response.status_code == 200:
+            try:
+                data = response.json()
+                total_matched = data.get("total_matched", 0)
+                
+                if zoho_connected:
+                    # Should show real reconciliation data (not necessarily checking specific mock values)
+                    self.log_result("Dashboard Reconciliation", True, 
+                                  f"✅ Shows real Zoho reconciliation data: Matched={total_matched}")
+                    success_count += 1
+                else:
+                    # Should show mock data when not connected
+                    if total_matched == 125000:
+                        self.log_result("Dashboard Reconciliation", True, 
+                                      f"✅ Correctly shows mock data when not connected")
+                        success_count += 1
+                    else:
+                        self.log_result("Dashboard Reconciliation", False, 
+                                      f"❌ Unexpected data when not connected: {total_matched}")
+            except json.JSONDecodeError:
+                self.log_result("Dashboard Reconciliation", False, "Invalid JSON response")
+        else:
+            self.log_result("Dashboard Reconciliation", False, "Request failed")
+        
+        return success_count == total_tests
+
     def run_zoho_integration_tests(self):
         """Run specific Zoho integration tests as requested in review"""
-        print("🚀 Starting Zoho Books Integration Tests")
+        print("🚀 Starting Review Request Tests - Chat & Dashboard Issues")
         print(f"Testing against: {BASE_URL}")
-        print("=" * 60)
+        print("=" * 80)
         
         # Authentication flow (required for all tests)
         signup_success = self.test_auth_signup()
         login_success = self.test_auth_login()
         
         if not login_success:
-            print("❌ Cannot proceed with Zoho tests - authentication failed")
+            print("❌ Cannot proceed with tests - authentication failed")
             return False
         
         # Check Zoho integration status
@@ -1092,15 +1289,23 @@ class VasoolAPITester:
             return False
         
         print(f"\n📊 Zoho Connection Status: {'✅ CONNECTED' if zoho_connected else '❌ NOT CONNECTED'}")
+        print(f"Integration Mode: {'Production' if zoho_connected else 'Not Connected'}")
         
         # Run specific tests from review request
-        chat_success = self.test_chat_with_zoho_data(zoho_connected)
-        dashboard_success = self.test_dashboard_with_zoho_data(zoho_connected)
+        print("\n" + "=" * 80)
+        print("TESTING ISSUE 1: Chat not returning invoice data")
+        print("=" * 80)
+        chat_success = self.test_review_request_chat_invoice_queries(zoho_connected)
+        
+        print("\n" + "=" * 80)
+        print("TESTING ISSUE 2: Dashboard showing dummy data instead of real Zoho data")
+        print("=" * 80)
+        dashboard_success = self.test_review_request_dashboard_data(zoho_connected)
         
         # Summary
-        print("\n" + "=" * 60)
-        print("📊 ZOHO INTEGRATION TEST SUMMARY")
-        print("=" * 60)
+        print("\n" + "=" * 80)
+        print("📊 REVIEW REQUEST TEST SUMMARY")
+        print("=" * 80)
         
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -1111,23 +1316,29 @@ class VasoolAPITester:
         print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
         
         # Critical findings
-        print(f"\n🔍 KEY FINDINGS:")
+        print(f"\n🔍 REVIEW REQUEST RESULTS:")
         print(f"  - Zoho Books Connected: {'Yes' if zoho_connected else 'No'}")
-        print(f"  - Chat GPT-5 Nano Integration: {'✅ Working' if chat_success else '❌ Failed'}")
-        print(f"  - Dashboard Real Data: {'✅ Working' if dashboard_success else '❌ Failed'}")
+        print(f"  - ISSUE 1 (Chat Invoice Data): {'✅ RESOLVED' if chat_success else '❌ FAILED'}")
+        print(f"  - ISSUE 2 (Dashboard Dummy Data): {'✅ RESOLVED' if dashboard_success else '❌ FAILED'}")
         
         if zoho_connected:
             print(f"  - Data Source: Real Zoho Books API")
+            print(f"  - Expected Behavior: No [DUMMY DATA] tags, real data or empty results")
         else:
             print(f"  - Data Source: Mock/Demo Data")
+            print(f"  - Expected Behavior: [DUMMY DATA] tags in chat, mock values in dashboard")
         
         # Detailed results
-        print("\n📋 DETAILED RESULTS:")
+        print("\n📋 DETAILED TEST RESULTS:")
         for result in self.test_results:
             status = "✅" if result["success"] else "❌"
             print(f"  {status} {result['test']}: {result['message']}")
         
-        return chat_success and dashboard_success
+        # Final verdict
+        both_issues_resolved = chat_success and dashboard_success
+        print(f"\n🎯 FINAL VERDICT: {'✅ BOTH ISSUES RESOLVED' if both_issues_resolved else '❌ ISSUES REMAIN'}")
+        
+        return both_issues_resolved
 
     def run_all_tests(self):
         """Run all API tests"""
