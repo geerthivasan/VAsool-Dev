@@ -12,7 +12,8 @@ from zoho_api_helper import (
     get_invoices, 
     get_customers,
     get_outstanding_receivables,
-    search_invoices_by_customer
+    search_invoices_by_customer,
+    get_payments
 )
 import json
 
