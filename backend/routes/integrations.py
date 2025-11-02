@@ -293,13 +293,65 @@ async def get_integration_status(
 async def disconnect_zoho(
     current_user: dict = Depends(get_current_user)
 ):
+    """Disconnect Zoho Books and clear all tokens"""
     db = init_db()
     user_id = current_user["user_id"]
     
-    # Deactivate integration
-    result = await db.integrations.update_one(
-        {"user_id": user_id, "type": "zohobooks"},
-        {"$set": {"status": "inactive", "disconnected_at": datetime.utcnow()}}
-    )
+    # Delete integration completely to force fresh connection
+    result = await db.integrations.delete_many({
+        "user_id": user_id,
+        "type": "zohobooks"
+    })
     
-    return {"success": True, "message": "Zoho Books disconnected successfully"}
+    # Also clean up OAuth credentials
+    await db.user_oauth_credentials.delete_many({
+        "user_id": user_id
+    })
+    
+    return {
+        "success": True, 
+        "message": f"Zoho Books disconnected successfully. Cleared {result.deleted_count} integration(s)."
+    }
+
+@router.post("/zoho/force-refresh")
+async def force_refresh_token(
+    current_user: dict = Depends(get_current_user)
+):
+    """Force refresh the Zoho Books access token"""
+    db = init_db()
+    user_id = current_user["user_id"]
+    
+    # Get integration with refresh token
+    integration = await db.integrations.find_one({
+        "user_id": user_id,
+        "type": "zohobooks",
+        "status": "active"
+    })
+    
+    if not integration:
+        raise HTTPException(status_code=404, detail="No active Zoho Books integration found")
+    
+    refresh_token = integration.get("refresh_token")
+    client_id = integration.get("client_id")
+    client_secret = integration.get("client_secret")
+    
+    if not all([refresh_token, client_id, client_secret]):
+        raise HTTPException(
+            status_code=400, 
+            detail="Missing credentials for token refresh. Please reconnect Zoho Books."
+        )
+    
+    # Attempt token refresh
+    from zoho_api_helper import refresh_zoho_token
+    new_token = await refresh_zoho_token(user_id, refresh_token, client_id, client_secret)
+    
+    if new_token:
+        return {
+            "success": True,
+            "message": "Token refreshed successfully"
+        }
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to refresh token. Please disconnect and reconnect Zoho Books."
+        )
